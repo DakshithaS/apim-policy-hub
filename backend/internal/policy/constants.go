@@ -19,6 +19,11 @@ const (
 	MinPageSize     = 1
 )
 
+// Batch processing constants
+const (
+	MaxBatchSize = 100 // Maximum batch size limit
+)
+
 // Validation constants
 const (
 	MaxPolicyNameLength  = 100
@@ -34,7 +39,7 @@ const (
 // Regular expressions for validation
 const (
 	PolicyNameRegex = `^[a-zA-Z0-9_-]+$`
-	VersionRegex    = `^v\d+\.\d+\.\d+$`
+	VersionRegex    = `^\d+\.\d+\.\d+$`
 )
 
 // ValidDocTypes returns a map of valid documentation types
@@ -44,15 +49,5 @@ func ValidDocTypes() map[string]bool {
 		string(DocTypeConfiguration): true,
 		string(DocTypeExamples):      true,
 		string(DocTypeFAQ):           true,
-	}
-}
-
-// ValidDocTypeStrings returns a slice of valid documentation type strings
-func ValidDocTypeStrings() []string {
-	return []string{
-		string(DocTypeOverview),
-		string(DocTypeConfiguration),
-		string(DocTypeExamples),
-		string(DocTypeFAQ),
 	}
 }

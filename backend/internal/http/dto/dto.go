@@ -102,9 +102,9 @@ type BatchPolicyRequestDTO struct {
 
 // PolicyRequestItemDTO represents a single policy request in the batch
 type PolicyRequestItemDTO struct {
-	Name      string `json:"name" binding:"required"`
-	Version   string `json:"version,omitempty"`
-	UseLatest bool   `json:"useLatest,omitempty"`
+	Name              string `json:"name" binding:"required"`
+	RetrievalStrategy string `json:"retrievalStrategy" binding:"required"` // "exact", "latest_patch", "latest_minor", "latest_major"
+	BaseVersion       string `json:"baseVersion,omitempty"`                // For "exact", "latest_patch", "latest_minor"; ignored for "latest_major"
 }
 
 // PolicyBatchItemDTO represents a policy item in the batch response

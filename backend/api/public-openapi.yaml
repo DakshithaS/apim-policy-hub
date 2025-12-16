@@ -110,8 +110,11 @@ paths:
     post:
       tags:
         - policies
-      summary: Retrieve multiple policies by name and version
-      description: Batch endpoint to retrieve multiple policies with their definitions, metadata, source type and source URL
+      summary: Retrieve multiple policies with strategy-based version selection
+      description: |
+        Batch endpoint to retrieve multiple policies with strategy-based version selection.
+        Supports exact version matching, latest patch/minor/major version resolution.
+        Maximum 100 policies per request. Version format must be d.d.d (e.g., "1.2.3").
       operationId: batchGetPolicies
       requestBody:
         required: true
@@ -792,7 +795,7 @@ components:
         logoUrl:
           type: string
           format: uri
-          example: https://raw.githubusercontent.com/wso2/policies/rate-limit/v1.1.0/logo.svg
+          example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/logo.svg
         bannerUrl:
           type: string
           format: uri
@@ -862,7 +865,7 @@ components:
           description: Raw policy definition in YAML format
           example: |
             policyName: rate-limit
-            version: v1.1.0
+            version: "1.1.0"
             schema:
               type: object
               properties:
@@ -951,11 +954,19 @@ components:
           items:
             $ref: '#/components/schemas/PolicyRequestItem'
           minItems: 1
+          maxItems: 100
           example:
             - name: rate-limiting
-              version: v2.0.0
+              retrievalStrategy: exact
+              baseVersion: "1.1.0"
+            - name: jwt-authentication
+              retrievalStrategy: latest_patch
+              baseVersion: "2.1"
             - name: cors-policy
-              useLatest: true
+              retrievalStrategy: latest_minor
+              baseVersion: "1"
+            - name: api-throttling
+              retrievalStrategy: latest_major
       required:
         - policies
 
@@ -965,15 +976,29 @@ components:
         name:
           type: string
           example: rate-limiting
-        version:
+        retrievalStrategy:
           type: string
-          example: v2.0.0
-        useLatest:
-          type: boolean
-          default: false
-          example: false
+          enum: [exact, latest_patch, latest_minor, latest_major]
+          example: exact
+          description: |
+            Strategy for version retrieval:
+            - exact: Get the exact version specified in baseVersion
+            - latest_patch: Get latest patch version within major.minor from baseVersion
+            - latest_minor: Get latest minor version within major from baseVersion  
+            - latest_major: Get latest major version (no baseVersion needed)
+        baseVersion:
+          type: string
+          example: "1.1.0"
+          description: |
+            Base version for strategy-based retrieval. Required for exact, latest_patch, latest_minor.
+            Format depends on strategy:
+            - exact: "1.2.3" (full semantic version)
+            - latest_patch: "1.2" (major.minor)
+            - latest_minor: "1" (major only)
+            - latest_major: not used
       required:
         - name
+        - retrievalStrategy
 
     PolicyBatchItem:
       type: object
@@ -983,22 +1008,23 @@ components:
           example: rate-limiting
         version:
           type: string
-          example: v2.0.0
+          example: "1.1.0"
         sourceType:
           type: string
-          example: filesystem
+          example: github
         sourceUrl:
           type: string
-          example: /storage/rate-limiting/v2.0.0
+          example: "https://github.com/wso2/policy-hub/tree/main/storage/rate-limiting/1.1.0"
         definition:
           type: object
-          additionalProperties: true
+          properties:
+            yaml:
+              type: string
+              description: Raw YAML policy definition
           example:
-            policyName: rate-limiting
-            version: v2.0.0
-            schema: {}
+            yaml: "name: rate-limiting\nversion: 1.1.0\ndescription: Rate limiting policy\n..."
         metadata:
-          $ref: '#/components/schemas/PolicyMetadata'
+          $ref: '#/components/schemas/PolicyVersion'
       required:
         - name
         - version
@@ -1015,7 +1041,7 @@ components:
           example: non-existent-policy
         version:
           type: string
-          example: v1.0.0
+          example: "1.0.0"
         error:
           type: string
           example: Policy not found

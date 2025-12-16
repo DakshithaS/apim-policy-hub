@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -241,13 +242,25 @@ func (h *PolicyHandler) BatchGetPolicies(c *gin.Context) {
 		return
 	}
 
+	// Validate batch size
+	batchSize := len(request.Policies)
+
+	// Enforce maximum batch size limit
+	if batchSize > policy.MaxBatchSize {
+		c.JSON(400, gin.H{
+			"error":    fmt.Sprintf("Batch size %d exceeds maximum limit of %d policies", batchSize, policy.MaxBatchSize),
+			"max_size": policy.MaxBatchSize,
+		})
+		return
+	}
+
 	// Convert DTOs to service types
 	serviceRequests := make([]policy.BatchPolicyRequest, 0, len(request.Policies))
 	for _, req := range request.Policies {
 		serviceRequests = append(serviceRequests, policy.BatchPolicyRequest{
-			Name:      req.Name,
-			Version:   req.Version,
-			UseLatest: req.UseLatest,
+			Name:              req.Name,
+			RetrievalStrategy: req.RetrievalStrategy,
+			BaseVersion:       req.BaseVersion,
 		})
 	}
 

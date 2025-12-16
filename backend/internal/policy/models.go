@@ -101,9 +101,9 @@ func CalculateTotalPages(totalItems, pageSize int) int {
 
 // BatchPolicyRequest represents a single policy request in the batch
 type BatchPolicyRequest struct {
-	Name      string
-	Version   string
-	UseLatest bool
+	Name              string
+	RetrievalStrategy string
+	BaseVersion       string
 }
 
 // PolicyBatchItem represents a policy item in batch response
@@ -121,6 +121,23 @@ type PolicyBatchError struct {
 	Name    string
 	Version string
 	Error   string
+}
+
+// Bulk request types for optimization
+type ExactVersionRequest struct {
+	Name    string
+	Version string
+}
+
+type PatchVersionRequest struct {
+	Name         string
+	MajorVersion int32
+	MinorVersion int32
+}
+
+type MinorVersionRequest struct {
+	Name         string
+	MajorVersion int32
 }
 
 // PolicyMetadata represents the metadata.json structure

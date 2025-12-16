@@ -37,4 +37,7 @@ type PolicyVersion struct {
 	SourceUrl          pgtype.Text        `json:"source_url"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	MajorVersion       pgtype.Int4        `json:"major_version"`
+	MinorVersion       pgtype.Int4        `json:"minor_version"`
+	PatchVersion       pgtype.Int4        `json:"patch_version"`
 }

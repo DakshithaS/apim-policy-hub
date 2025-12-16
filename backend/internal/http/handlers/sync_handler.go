@@ -3,12 +3,12 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/wso2/policyhub/internal/errs"
 	"github.com/wso2/policyhub/internal/http/dto"
 	"github.com/wso2/policyhub/internal/http/middleware"
 	"github.com/wso2/policyhub/internal/logging"
 	"github.com/wso2/policyhub/internal/policy"
 	"github.com/wso2/policyhub/internal/sync"
+	"github.com/wso2/policyhub/internal/validation"
 )
 
 // SyncHandler handles sync operations
@@ -33,18 +33,28 @@ func (h *SyncHandler) Sync(c *gin.Context) {
 		return
 	}
 
+	// Validate version format (must be d.d.d)
+	if err := validation.ValidateVersion(req.Version); err != nil {
+		_ = c.Error(err)
+		return
+	}
+
+	// Validate policy name
+	if err := validation.ValidatePolicyName(req.PolicyName); err != nil {
+		_ = c.Error(err)
+		return
+	}
+
 	// Validate documentation types
 	if req.Documentation != nil {
 		validDocTypes := policy.ValidDocTypes()
-		for docType := range req.Documentation {
-			if !validDocTypes[docType] {
-				_ = c.Error(errs.NewValidationError("invalid documentation type", map[string]any{
-					"docType":    docType,
-					"validTypes": policy.ValidDocTypeStrings(),
-				}))
-				return
+		filteredDocs := make(map[string]string)
+		for docType, content := range req.Documentation {
+			if validDocTypes[docType] {
+				filteredDocs[docType] = content
 			}
 		}
+		req.Documentation = filteredDocs
 	}
 
 	// Convert DTO to sync request

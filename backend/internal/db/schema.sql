@@ -66,3 +66,35 @@ ON policy_version (policy_name, version);
 
 CREATE INDEX IF NOT EXISTS idx_policy_version_created_at ON policy_version (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_policy_docs_page ON policy_docs (policy_version_id, page);
+
+-- Add computed columns for semantic version parts (assumes format: major.minor.patch)
+ALTER TABLE policy_version 
+ADD COLUMN IF NOT EXISTS major_version INT GENERATED ALWAYS AS (
+    CASE 
+        WHEN version ~ '^\d+\.\d+\.\d+' THEN split_part(version, '.', 1)::INT 
+        ELSE NULL 
+    END
+) STORED;
+
+ALTER TABLE policy_version 
+ADD COLUMN IF NOT EXISTS minor_version INT GENERATED ALWAYS AS (
+    CASE 
+        WHEN version ~ '^\d+\.\d+\.\d+' THEN split_part(version, '.', 2)::INT 
+        ELSE NULL 
+    END
+) STORED;
+
+ALTER TABLE policy_version 
+ADD COLUMN IF NOT EXISTS patch_version INT GENERATED ALWAYS AS (
+    CASE 
+        WHEN version ~ '^\d+\.\d+\.\d+' THEN split_part(version, '.', 3)::INT 
+        ELSE NULL 
+    END
+) STORED;
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_policy_version_semver 
+ON policy_version (policy_name, major_version DESC, minor_version DESC, patch_version DESC);
+
+CREATE INDEX IF NOT EXISTS idx_policy_version_patch_lookup 
+ON policy_version (policy_name, major_version, minor_version, patch_version DESC);

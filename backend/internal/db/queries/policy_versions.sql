@@ -12,10 +12,6 @@ WHERE policy_name = $1 AND version = $2;
 SELECT * FROM policy_version
 WHERE policy_name = $1 AND is_latest = TRUE;
 
--- name: GetPolicyByName :one
-SELECT * FROM policy_version
-WHERE policy_name = $1 AND is_latest = TRUE;
-
 -- =============================================================================
 -- POLICY VERSION LISTING & FILTERING
 -- =============================================================================
@@ -122,3 +118,40 @@ INSERT INTO policy_version (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW()
 )
 RETURNING *;
+
+-- =============================================================================
+-- STRATEGY-BASED POLICY RETRIEVAL
+-- =============================================================================
+
+-- name: GetPolicyVersionByExact :one
+SELECT * FROM policy_version
+WHERE policy_name = $1 AND version = $2;
+
+-- name: GetPolicyVersionByLatestPatch :one
+SELECT * FROM policy_version
+WHERE policy_name = $1 
+  AND major_version = $2 
+  AND minor_version = $3
+ORDER BY patch_version DESC
+LIMIT 1;
+
+-- name: GetPolicyVersionByLatestMinor :one
+SELECT * FROM policy_version
+WHERE policy_name = $1 
+  AND major_version = $2
+ORDER BY minor_version DESC, patch_version DESC
+LIMIT 1;
+
+-- name: GetPolicyVersionByLatestMajor :one
+SELECT * FROM policy_version
+WHERE policy_name = $1
+ORDER BY major_version DESC, minor_version DESC, patch_version DESC
+LIMIT 1;
+
+-- =============================================================================
+-- BULK STRATEGY-BASED POLICY RETRIEVAL
+-- =============================================================================
+
+-- name: BulkGetPolicyVersionsByNames :many
+SELECT * FROM policy_version
+WHERE policy_name = ANY($1::text[]);

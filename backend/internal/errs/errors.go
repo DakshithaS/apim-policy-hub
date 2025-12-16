@@ -11,7 +11,6 @@ import (
 type Code string
 
 const (
-	CodePolicyNotFound        Code = "POLICY_NOT_FOUND"
 	CodePolicyVersionNotFound Code = "POLICY_VERSION_NOT_FOUND"
 	CodeDocNotFound           Code = "DOC_NOT_FOUND"
 	CodeValidationError       Code = "VALIDATION_ERROR"
@@ -91,15 +90,6 @@ func SanitizeDatabaseError(operation string) *AppError {
 		Message:    "A database error occurred while processing your request",
 		Details:    map[string]any{"operation": operation},
 	}
-}
-
-// PolicyNotFound creates a policy not found error
-func PolicyNotFound(name string) *AppError {
-	return NewNotFoundError(
-		CodePolicyNotFound,
-		"Policy not found",
-		map[string]any{"policyName": name},
-	)
 }
 
 // PolicyVersionNotFound creates a policy version not found error

@@ -180,11 +180,11 @@ components:
         logoUrl:
           type: string
           format: uri
-          example: https://raw.githubusercontent.com/wso2/policies/rate-limit/v1.1.0/icon.svg
+          example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/icon.svg
         bannerUrl:
           type: string
           format: uri
-          example: https://raw.githubusercontent.com/wso2/policies/rate-limit/v1.1.0/banner.png
+          example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/banner.png
       required:
         - name
         - displayName
@@ -198,7 +198,7 @@ components:
           example: rate-limit
         version:
           type: string
-          example: v1.1.0
+          example: "1.1.0"
         sourceType:
           type: string
           enum: [github]
@@ -211,7 +211,7 @@ components:
           type: string
           format: uri
           description: URL to raw policy definition file (YAML format only)
-          example: https://raw.githubusercontent.com/wso2/policies/rate-limit/v1.1.0/policy-definition.yml
+          example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/policy-definition.yml
         metadata:
           allOf:
             - $ref: '#/components/schemas/PolicyMetadata'
@@ -222,21 +222,21 @@ components:
           properties:
             overview:
               type: string
-              example: https://raw.githubusercontent.com/wso2/policies/rate-limit/v1.1.0/docs/overview.md
+              example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/overview.md
             configuration:
               type: string
-              example: https://raw.githubusercontent.com/wso2/policies/rate-limit/v1.1.0/docs/configuration.md
+              example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/configuration.md
             examples:
               type: string
-              example: https://raw.githubusercontent.com/wso2/policies/rate-limit/v1.1.0/docs/examples.md
+              example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/examples.md
             faq:
               type: string
-              example: https://raw.githubusercontent.com/wso2/policies/rate-limit/v1.1.0/docs/faq.md
+              example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/faq.md
           required: []  # Optional per type
         assetsBaseUrl:
           type: string
           format: uri
-          example: https://raw.githubusercontent.com/wso2/policies/rate-limit/v1.1.0/assets/
+          example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/assets/
       required:
         - policyName
         - version
@@ -269,7 +269,7 @@ components:
           example: rate-limit
         version:
           type: string
-          example: v1.1.0
+          example: "1.1.0"
         status:
           type: string
           enum: [synced]

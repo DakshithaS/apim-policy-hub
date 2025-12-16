@@ -11,6 +11,58 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const bulkGetPolicyVersionsByNames = `-- name: BulkGetPolicyVersionsByNames :many
+
+SELECT id, policy_name, version, is_latest, display_name, provider, description, categories, tags, logo_path, banner_path, supported_platforms, release_date, definition_yaml, icon_path, source_type, source_url, created_at, updated_at, major_version, minor_version, patch_version FROM policy_version
+WHERE policy_name = ANY($1::text[])
+`
+
+// =============================================================================
+// BULK STRATEGY-BASED POLICY RETRIEVAL
+// =============================================================================
+func (q *Queries) BulkGetPolicyVersionsByNames(ctx context.Context, dollar_1 []string) ([]PolicyVersion, error) {
+	rows, err := q.db.Query(ctx, bulkGetPolicyVersionsByNames, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []PolicyVersion{}
+	for rows.Next() {
+		var i PolicyVersion
+		if err := rows.Scan(
+			&i.ID,
+			&i.PolicyName,
+			&i.Version,
+			&i.IsLatest,
+			&i.DisplayName,
+			&i.Provider,
+			&i.Description,
+			&i.Categories,
+			&i.Tags,
+			&i.LogoPath,
+			&i.BannerPath,
+			&i.SupportedPlatforms,
+			&i.ReleaseDate,
+			&i.DefinitionYaml,
+			&i.IconPath,
+			&i.SourceType,
+			&i.SourceUrl,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.MajorVersion,
+			&i.MinorVersion,
+			&i.PatchVersion,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const countPoliciesByMultiple = `-- name: CountPoliciesByMultiple :one
 SELECT COUNT(DISTINCT pv.policy_name) FROM policy_version pv
 WHERE ($1::text = '' OR LOWER(pv.display_name) LIKE LOWER('%' || $1 || '%') OR LOWER(pv.description) LIKE LOWER('%' || $1 || '%'))
@@ -53,7 +105,7 @@ func (q *Queries) CountPolicyVersions(ctx context.Context, policyName string) (i
 const filterPoliciesByMultiple = `-- name: FilterPoliciesByMultiple :many
 WITH ranked_versions AS (
     SELECT 
-        pv.id, pv.policy_name, pv.version, pv.is_latest, pv.display_name, pv.provider, pv.description, pv.categories, pv.tags, pv.logo_path, pv.banner_path, pv.supported_platforms, pv.release_date, pv.definition_yaml, pv.icon_path, pv.source_type, pv.source_url, pv.created_at, pv.updated_at,
+        pv.id, pv.policy_name, pv.version, pv.is_latest, pv.display_name, pv.provider, pv.description, pv.categories, pv.tags, pv.logo_path, pv.banner_path, pv.supported_platforms, pv.release_date, pv.definition_yaml, pv.icon_path, pv.source_type, pv.source_url, pv.created_at, pv.updated_at, pv.major_version, pv.minor_version, pv.patch_version,
         ROW_NUMBER() OVER (
             PARTITION BY pv.policy_name 
             ORDER BY 
@@ -241,7 +293,7 @@ func (q *Queries) GetDistinctProviders(ctx context.Context) ([]string, error) {
 }
 
 const getLatestPolicyVersion = `-- name: GetLatestPolicyVersion :one
-SELECT id, policy_name, version, is_latest, display_name, provider, description, categories, tags, logo_path, banner_path, supported_platforms, release_date, definition_yaml, icon_path, source_type, source_url, created_at, updated_at FROM policy_version
+SELECT id, policy_name, version, is_latest, display_name, provider, description, categories, tags, logo_path, banner_path, supported_platforms, release_date, definition_yaml, icon_path, source_type, source_url, created_at, updated_at, major_version, minor_version, patch_version FROM policy_version
 WHERE policy_name = $1 AND is_latest = TRUE
 `
 
@@ -268,38 +320,9 @@ func (q *Queries) GetLatestPolicyVersion(ctx context.Context, policyName string)
 		&i.SourceUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getPolicyByName = `-- name: GetPolicyByName :one
-SELECT id, policy_name, version, is_latest, display_name, provider, description, categories, tags, logo_path, banner_path, supported_platforms, release_date, definition_yaml, icon_path, source_type, source_url, created_at, updated_at FROM policy_version
-WHERE policy_name = $1 AND is_latest = TRUE
-`
-
-func (q *Queries) GetPolicyByName(ctx context.Context, policyName string) (PolicyVersion, error) {
-	row := q.db.QueryRow(ctx, getPolicyByName, policyName)
-	var i PolicyVersion
-	err := row.Scan(
-		&i.ID,
-		&i.PolicyName,
-		&i.Version,
-		&i.IsLatest,
-		&i.DisplayName,
-		&i.Provider,
-		&i.Description,
-		&i.Categories,
-		&i.Tags,
-		&i.LogoPath,
-		&i.BannerPath,
-		&i.SupportedPlatforms,
-		&i.ReleaseDate,
-		&i.DefinitionYaml,
-		&i.IconPath,
-		&i.SourceType,
-		&i.SourceUrl,
-		&i.CreatedAt,
-		&i.UpdatedAt,
+		&i.MajorVersion,
+		&i.MinorVersion,
+		&i.PatchVersion,
 	)
 	return i, err
 }
@@ -307,7 +330,7 @@ func (q *Queries) GetPolicyByName(ctx context.Context, policyName string) (Polic
 const getPolicyVersion = `-- name: GetPolicyVersion :one
 
 
-SELECT id, policy_name, version, is_latest, display_name, provider, description, categories, tags, logo_path, banner_path, supported_platforms, release_date, definition_yaml, icon_path, source_type, source_url, created_at, updated_at FROM policy_version
+SELECT id, policy_name, version, is_latest, display_name, provider, description, categories, tags, logo_path, banner_path, supported_platforms, release_date, definition_yaml, icon_path, source_type, source_url, created_at, updated_at, major_version, minor_version, patch_version FROM policy_version
 WHERE policy_name = $1 AND version = $2
 `
 
@@ -343,6 +366,178 @@ func (q *Queries) GetPolicyVersion(ctx context.Context, arg GetPolicyVersionPara
 		&i.SourceUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.MajorVersion,
+		&i.MinorVersion,
+		&i.PatchVersion,
+	)
+	return i, err
+}
+
+const getPolicyVersionByExact = `-- name: GetPolicyVersionByExact :one
+
+SELECT id, policy_name, version, is_latest, display_name, provider, description, categories, tags, logo_path, banner_path, supported_platforms, release_date, definition_yaml, icon_path, source_type, source_url, created_at, updated_at, major_version, minor_version, patch_version FROM policy_version
+WHERE policy_name = $1 AND version = $2
+`
+
+type GetPolicyVersionByExactParams struct {
+	PolicyName string `json:"policy_name"`
+	Version    string `json:"version"`
+}
+
+// =============================================================================
+// STRATEGY-BASED POLICY RETRIEVAL
+// =============================================================================
+func (q *Queries) GetPolicyVersionByExact(ctx context.Context, arg GetPolicyVersionByExactParams) (PolicyVersion, error) {
+	row := q.db.QueryRow(ctx, getPolicyVersionByExact, arg.PolicyName, arg.Version)
+	var i PolicyVersion
+	err := row.Scan(
+		&i.ID,
+		&i.PolicyName,
+		&i.Version,
+		&i.IsLatest,
+		&i.DisplayName,
+		&i.Provider,
+		&i.Description,
+		&i.Categories,
+		&i.Tags,
+		&i.LogoPath,
+		&i.BannerPath,
+		&i.SupportedPlatforms,
+		&i.ReleaseDate,
+		&i.DefinitionYaml,
+		&i.IconPath,
+		&i.SourceType,
+		&i.SourceUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.MajorVersion,
+		&i.MinorVersion,
+		&i.PatchVersion,
+	)
+	return i, err
+}
+
+const getPolicyVersionByLatestMajor = `-- name: GetPolicyVersionByLatestMajor :one
+SELECT id, policy_name, version, is_latest, display_name, provider, description, categories, tags, logo_path, banner_path, supported_platforms, release_date, definition_yaml, icon_path, source_type, source_url, created_at, updated_at, major_version, minor_version, patch_version FROM policy_version
+WHERE policy_name = $1
+ORDER BY major_version DESC, minor_version DESC, patch_version DESC
+LIMIT 1
+`
+
+func (q *Queries) GetPolicyVersionByLatestMajor(ctx context.Context, policyName string) (PolicyVersion, error) {
+	row := q.db.QueryRow(ctx, getPolicyVersionByLatestMajor, policyName)
+	var i PolicyVersion
+	err := row.Scan(
+		&i.ID,
+		&i.PolicyName,
+		&i.Version,
+		&i.IsLatest,
+		&i.DisplayName,
+		&i.Provider,
+		&i.Description,
+		&i.Categories,
+		&i.Tags,
+		&i.LogoPath,
+		&i.BannerPath,
+		&i.SupportedPlatforms,
+		&i.ReleaseDate,
+		&i.DefinitionYaml,
+		&i.IconPath,
+		&i.SourceType,
+		&i.SourceUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.MajorVersion,
+		&i.MinorVersion,
+		&i.PatchVersion,
+	)
+	return i, err
+}
+
+const getPolicyVersionByLatestMinor = `-- name: GetPolicyVersionByLatestMinor :one
+SELECT id, policy_name, version, is_latest, display_name, provider, description, categories, tags, logo_path, banner_path, supported_platforms, release_date, definition_yaml, icon_path, source_type, source_url, created_at, updated_at, major_version, minor_version, patch_version FROM policy_version
+WHERE policy_name = $1 
+  AND major_version = $2
+ORDER BY minor_version DESC, patch_version DESC
+LIMIT 1
+`
+
+type GetPolicyVersionByLatestMinorParams struct {
+	PolicyName   string      `json:"policy_name"`
+	MajorVersion pgtype.Int4 `json:"major_version"`
+}
+
+func (q *Queries) GetPolicyVersionByLatestMinor(ctx context.Context, arg GetPolicyVersionByLatestMinorParams) (PolicyVersion, error) {
+	row := q.db.QueryRow(ctx, getPolicyVersionByLatestMinor, arg.PolicyName, arg.MajorVersion)
+	var i PolicyVersion
+	err := row.Scan(
+		&i.ID,
+		&i.PolicyName,
+		&i.Version,
+		&i.IsLatest,
+		&i.DisplayName,
+		&i.Provider,
+		&i.Description,
+		&i.Categories,
+		&i.Tags,
+		&i.LogoPath,
+		&i.BannerPath,
+		&i.SupportedPlatforms,
+		&i.ReleaseDate,
+		&i.DefinitionYaml,
+		&i.IconPath,
+		&i.SourceType,
+		&i.SourceUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.MajorVersion,
+		&i.MinorVersion,
+		&i.PatchVersion,
+	)
+	return i, err
+}
+
+const getPolicyVersionByLatestPatch = `-- name: GetPolicyVersionByLatestPatch :one
+SELECT id, policy_name, version, is_latest, display_name, provider, description, categories, tags, logo_path, banner_path, supported_platforms, release_date, definition_yaml, icon_path, source_type, source_url, created_at, updated_at, major_version, minor_version, patch_version FROM policy_version
+WHERE policy_name = $1 
+  AND major_version = $2 
+  AND minor_version = $3
+ORDER BY patch_version DESC
+LIMIT 1
+`
+
+type GetPolicyVersionByLatestPatchParams struct {
+	PolicyName   string      `json:"policy_name"`
+	MajorVersion pgtype.Int4 `json:"major_version"`
+	MinorVersion pgtype.Int4 `json:"minor_version"`
+}
+
+func (q *Queries) GetPolicyVersionByLatestPatch(ctx context.Context, arg GetPolicyVersionByLatestPatchParams) (PolicyVersion, error) {
+	row := q.db.QueryRow(ctx, getPolicyVersionByLatestPatch, arg.PolicyName, arg.MajorVersion, arg.MinorVersion)
+	var i PolicyVersion
+	err := row.Scan(
+		&i.ID,
+		&i.PolicyName,
+		&i.Version,
+		&i.IsLatest,
+		&i.DisplayName,
+		&i.Provider,
+		&i.Description,
+		&i.Categories,
+		&i.Tags,
+		&i.LogoPath,
+		&i.BannerPath,
+		&i.SupportedPlatforms,
+		&i.ReleaseDate,
+		&i.DefinitionYaml,
+		&i.IconPath,
+		&i.SourceType,
+		&i.SourceUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.MajorVersion,
+		&i.MinorVersion,
+		&i.PatchVersion,
 	)
 	return i, err
 }
@@ -370,7 +565,7 @@ INSERT INTO policy_version (
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW()
 )
-RETURNING id, policy_name, version, is_latest, display_name, provider, description, categories, tags, logo_path, banner_path, supported_platforms, release_date, definition_yaml, icon_path, source_type, source_url, created_at, updated_at
+RETURNING id, policy_name, version, is_latest, display_name, provider, description, categories, tags, logo_path, banner_path, supported_platforms, release_date, definition_yaml, icon_path, source_type, source_url, created_at, updated_at, major_version, minor_version, patch_version
 `
 
 type InsertPolicyVersionParams struct {
@@ -432,13 +627,16 @@ func (q *Queries) InsertPolicyVersion(ctx context.Context, arg InsertPolicyVersi
 		&i.SourceUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.MajorVersion,
+		&i.MinorVersion,
+		&i.PatchVersion,
 	)
 	return i, err
 }
 
 const listPolicyVersions = `-- name: ListPolicyVersions :many
 
-SELECT id, policy_name, version, is_latest, display_name, provider, description, categories, tags, logo_path, banner_path, supported_platforms, release_date, definition_yaml, icon_path, source_type, source_url, created_at, updated_at FROM policy_version
+SELECT id, policy_name, version, is_latest, display_name, provider, description, categories, tags, logo_path, banner_path, supported_platforms, release_date, definition_yaml, icon_path, source_type, source_url, created_at, updated_at, major_version, minor_version, patch_version FROM policy_version
 WHERE policy_name = $1
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3
@@ -482,6 +680,9 @@ func (q *Queries) ListPolicyVersions(ctx context.Context, arg ListPolicyVersions
 			&i.SourceUrl,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.MajorVersion,
+			&i.MinorVersion,
+			&i.PatchVersion,
 		); err != nil {
 			return nil, err
 		}
