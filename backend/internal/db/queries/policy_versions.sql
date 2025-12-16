@@ -1,3 +1,12 @@
+/*
+ * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com). All Rights Reserved.
+ *
+ * This software is the property of WSO2 LLC. and its suppliers, if any.
+ * Dissemination of any information or reproduction of any material contained
+ * herein in any form is strictly forbidden, unless permitted by WSO2 expressly.
+ * You may not alter or remove any copyright or other notice from copies of this content.
+ */
+
 -- All PolicyVersion queries - single table architecture
 
 -- =============================================================================
@@ -9,10 +18,6 @@ SELECT * FROM policy_version
 WHERE policy_name = $1 AND version = $2;
 
 -- name: GetLatestPolicyVersion :one
-SELECT * FROM policy_version
-WHERE policy_name = $1 AND is_latest = TRUE;
-
--- name: GetPolicyByName :one
 SELECT * FROM policy_version
 WHERE policy_name = $1 AND is_latest = TRUE;
 
@@ -49,7 +54,7 @@ WITH ranked_versions AS (
 SELECT 
     id, policy_name, version, is_latest, display_name, provider, description, 
     categories, tags, logo_path, banner_path, supported_platforms, 
-    release_date, definition_yaml, icon_path, source_type, source_url, 
+    release_date, definition_yaml, icon_path, source_type, download_url, 
     created_at, updated_at
 FROM ranked_versions 
 WHERE version_rank = 1
@@ -115,10 +120,47 @@ INSERT INTO policy_version (
     definition_yaml,
     icon_path,
     source_type,
-    source_url,
+    download_url,
     created_at,
     updated_at
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW()
 )
 RETURNING *;
+
+-- =============================================================================
+-- STRATEGY-BASED POLICY RETRIEVAL
+-- =============================================================================
+
+-- name: GetPolicyVersionByExact :one
+SELECT * FROM policy_version
+WHERE policy_name = $1 AND version = $2;
+
+-- name: GetPolicyVersionByLatestPatch :one
+SELECT * FROM policy_version
+WHERE policy_name = $1 
+  AND major_version = $2 
+  AND minor_version = $3
+ORDER BY patch_version DESC
+LIMIT 1;
+
+-- name: GetPolicyVersionByLatestMinor :one
+SELECT * FROM policy_version
+WHERE policy_name = $1 
+  AND major_version = $2
+ORDER BY minor_version DESC, patch_version DESC
+LIMIT 1;
+
+-- name: GetPolicyVersionByLatestMajor :one
+SELECT * FROM policy_version
+WHERE policy_name = $1
+ORDER BY major_version DESC, minor_version DESC, patch_version DESC
+LIMIT 1;
+
+-- =============================================================================
+-- BULK STRATEGY-BASED POLICY RETRIEVAL
+-- =============================================================================
+
+-- name: BulkGetPolicyVersionsByNames :many
+SELECT * FROM policy_version
+WHERE policy_name = ANY($1::text[]);

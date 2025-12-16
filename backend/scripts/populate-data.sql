@@ -1,3 +1,12 @@
+/*
+ * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com). All Rights Reserved.
+ *
+ * This software is the property of WSO2 LLC. and its suppliers, if any.
+ * Dissemination of any information or reproduction of any material contained
+ * herein in any form is strictly forbidden, unless permitted by WSO2 expressly.
+ * You may not alter or remove any copyright or other notice from copies of this content.
+ */
+
 -- Policy Hub Sample Data Population Script
 -- This script populates the database with sample policies for testing
 -- Updated for single table architecture
@@ -14,12 +23,12 @@ ALTER SEQUENCE policy_docs_id_seq RESTART WITH 1;
 INSERT INTO policy_version (
     policy_name, version, is_latest, display_name, provider, description, 
     categories, tags, logo_path, banner_path, supported_platforms,
-    release_date, definition_yaml, source_type, source_url
+    release_date, definition_yaml, source_type, download_url
 ) VALUES
 -- Rate Limiting Policy Versions
-('rate-limiting', 'v1.0.0', false, 'Rate Limiting Policy', 'WSO2', 'Controls the number of requests per time window to prevent API abuse and ensure fair usage', '["security", "traffic-control"]', '["rate-limit", "throttling", "quota"]', 'rate-limiting/v1.0.0/assets/icon.svg', 'rate-limiting/v1.0.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-01-15',
+('rate-limiting', '1.0.0', false, 'Rate Limiting Policy', 'WSO2', 'Controls the number of requests per time window to prevent API abuse and ensure fair usage', '["security", "traffic-control"]', '["rate-limit", "throttling", "quota"]', 'rate-limiting/1.0.0/assets/icon.svg', 'rate-limiting/1.0.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-01-15',
 'name: rate-limiting
-version: v1.0.0
+version: 1.0.0
 description: Basic rate limiting policy
 configuration:
   properties:
@@ -41,11 +50,11 @@ configuration:
       default: "ip"
 enforcement:
   type: "request"
-  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/rate-limiting/v1.0.0'),
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/rate-limiting/1.0.0'),
 
-('rate-limiting', 'v1.1.0', true, 'Rate Limiting Policy', 'WSO2', 'Controls the number of requests per time window with enhanced burst capacity', '["security", "traffic-control"]', '["rate-limit", "throttling", "quota", "burst"]', 'rate-limiting/v1.1.0/assets/icon.svg', 'rate-limiting/v1.1.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-03-20',
+('rate-limiting', '1.1.0', true, 'Rate Limiting Policy', 'WSO2', 'Controls the number of requests per time window with enhanced burst capacity', '["security", "traffic-control"]', '["rate-limit", "throttling", "quota", "burst"]', 'rate-limiting/1.1.0/assets/icon.svg', 'rate-limiting/1.1.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-03-20',
 'name: rate-limiting
-version: v1.1.0
+version: 1.1.0
 description: Enhanced rate limiting with burst capacity
 configuration:
   properties:
@@ -72,12 +81,12 @@ configuration:
       default: "ip"
 enforcement:
   type: "request"
-  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/rate-limiting/v1.1.0'),
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/rate-limiting/1.1.0'),
 
 -- JWT Authentication Policy Versions  
-('jwt-authentication', 'v1.0.0', false, 'JWT Authentication Policy', 'WSO2', 'Validates JSON Web Tokens (JWT) for API authentication and authorization', '["security", "authentication"]', '["jwt", "token", "auth"]', 'jwt-authentication/v1.0.0/assets/icon.svg', 'jwt-authentication/v1.0.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-02-10',
+('jwt-authentication', '1.0.0', false, 'JWT Authentication Policy', 'WSO2', 'Validates JSON Web Tokens (JWT) for API authentication and authorization', '["security", "authentication"]', '["jwt", "token", "auth"]', 'jwt-authentication/1.0.0/assets/icon.svg', 'jwt-authentication/1.0.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-02-10',
 'name: jwt-authentication
-version: v1.0.0
+version: 1.0.0
 description: JWT token validation policy
 configuration:
   properties:
@@ -104,11 +113,11 @@ configuration:
       default: "RS256"
 enforcement:
   type: "request"
-  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/jwt-authentication/v1.0.0'),
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/jwt-authentication/1.0.0'),
 
-('jwt-authentication', 'v2.0.0', false, 'JWT Authentication Policy', 'WSO2', 'Advanced JWT validation with multi-issuer support and enhanced security', '["security", "authentication"]', '["jwt", "token", "auth", "multi-issuer"]', 'jwt-authentication/v2.0.0/assets/icon.svg', 'jwt-authentication/v2.0.0/assets/banner.png', '["apim-4.5+"]', '2024-06-15',
+('jwt-authentication', '2.0.0', false, 'JWT Authentication Policy', 'WSO2', 'Advanced JWT validation with multi-issuer support and enhanced security', '["security", "authentication"]', '["jwt", "token", "auth", "multi-issuer"]', 'jwt-authentication/2.0.0/assets/icon.svg', 'jwt-authentication/2.0.0/assets/banner.png', '["apim-4.5+"]', '2024-06-15',
 'name: jwt-authentication
-version: v2.0.0
+version: 2.0.0
 description: Advanced JWT validation with multi-issuer support
 configuration:
   properties:
@@ -142,11 +151,11 @@ configuration:
       default: 300
 enforcement:
   type: "request"
-  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/jwt-authentication/v2.0.0'),
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/jwt-authentication/2.0.0'),
 
-('jwt-authentication', 'v2.1.0', true, 'JWT Authentication Policy', 'WSO2', 'Latest JWT validation with caching and performance improvements', '["security", "authentication"]', '["jwt", "token", "auth", "multi-issuer", "cache"]', 'jwt-authentication/v2.1.0/assets/icon.svg', 'jwt-authentication/v2.1.0/assets/banner.png', '["apim-4.5+"]', '2024-09-10',
+('jwt-authentication', '2.1.0', true, 'JWT Authentication Policy', 'WSO2', 'Latest JWT validation with caching and performance improvements', '["security", "authentication"]', '["jwt", "token", "auth", "multi-issuer", "cache"]', 'jwt-authentication/2.1.0/assets/icon.svg', 'jwt-authentication/2.1.0/assets/banner.png', '["apim-4.5+"]', '2024-09-10',
 'name: jwt-authentication
-version: v2.1.0
+version: 2.1.0
 description: JWT validation with caching and performance improvements
 configuration:
   properties:
@@ -188,12 +197,12 @@ configuration:
       default: 1000
 enforcement:
   type: "request"
-  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/jwt-authentication/v2.1.0'),
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/jwt-authentication/2.1.0'),
 
 -- CORS Policy Versions
-('cors-policy', 'v1.0.0', false, 'CORS Policy', 'Community', 'Manages Cross-Origin Resource Sharing (CORS) headers for web API security', '["security", "web"]', '["cors", "cross-origin", "headers"]', 'cors-policy/v1.0.0/assets/icon.svg', 'cors-policy/v1.0.0/assets/banner.png', '["apim-4.5+", "apim-4.4+", "apim-4.3+"]', '2024-01-25',
+('cors-policy', '1.0.0', false, 'CORS Policy', 'Community', 'Manages Cross-Origin Resource Sharing (CORS) headers for web API security', '["security", "web"]', '["cors", "cross-origin", "headers"]', 'cors-policy/1.0.0/assets/icon.svg', 'cors-policy/1.0.0/assets/banner.png', '["apim-4.5+", "apim-4.4+", "apim-4.3+"]', '2024-01-25',
 'name: cors-policy
-version: v1.0.0
+version: 1.0.0
 description: Basic CORS policy
 configuration:
   properties:
@@ -221,11 +230,11 @@ configuration:
       default: 3600
 enforcement:
   type: "response"
-  stage: "post"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/cors-policy/v1.0.0'),
+  stage: "post"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/cors-policy/1.0.0'),
 
-('cors-policy', 'v1.1.0', false, 'CORS Policy', 'Community', 'Enhanced CORS policy with credentials support', '["security", "web"]', '["cors", "cross-origin", "headers", "credentials"]', 'cors-policy/v1.1.0/assets/icon.svg', 'cors-policy/v1.1.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-04-15',
+('cors-policy', '1.1.0', false, 'CORS Policy', 'Community', 'Enhanced CORS policy with credentials support', '["security", "web"]', '["cors", "cross-origin", "headers", "credentials"]', 'cors-policy/1.1.0/assets/icon.svg', 'cors-policy/1.1.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-04-15',
 'name: cors-policy
-version: v1.1.0
+version: 1.1.0
 description: Enhanced CORS policy with credentials support
 configuration:
   properties:
@@ -263,11 +272,11 @@ configuration:
       default: 3600
 enforcement:
   type: "response"
-  stage: "post"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/cors-policy/v1.1.0'),
+  stage: "post"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/cors-policy/1.1.0'),
 
-('cors-policy', 'v1.2.0', true, 'CORS Policy', 'Community', 'Latest CORS policy with dynamic origin validation', '["security", "web"]', '["cors", "cross-origin", "headers", "dynamic"]', 'cors-policy/v1.2.0/assets/icon.svg', 'cors-policy/v1.2.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-08-20',
+('cors-policy', '1.2.0', true, 'CORS Policy', 'Community', 'Latest CORS policy with dynamic origin validation', '["security", "web"]', '["cors", "cross-origin", "headers", "dynamic"]', 'cors-policy/1.2.0/assets/icon.svg', 'cors-policy/1.2.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-08-20',
 'name: cors-policy
-version: v1.2.0
+version: 1.2.0
 description: CORS policy with dynamic origin validation
 configuration:
   properties:
@@ -313,12 +322,12 @@ configuration:
       default: ".*"
 enforcement:
   type: "response"
-  stage: "post"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/cors-policy/v1.2.0'),
+  stage: "post"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/cors-policy/1.2.0'),
 
 -- API Throttling Policy Versions
-('api-throttling', 'v1.0.0', false, 'API Throttling Policy', 'WSO2', 'Advanced throttling with burst capacity and dynamic rate limiting', '["traffic-control", "performance"]', '["throttling", "burst", "dynamic"]', 'api-throttling/v1.0.0/assets/icon.svg', 'api-throttling/v1.0.0/assets/banner.png', '["apim-4.5+"]', '2024-03-01',
+('api-throttling', '1.0.0', false, 'API Throttling Policy', 'WSO2', 'Advanced throttling with burst capacity and dynamic rate limiting', '["traffic-control", "performance"]', '["throttling", "burst", "dynamic"]', 'api-throttling/1.0.0/assets/icon.svg', 'api-throttling/1.0.0/assets/banner.png', '["apim-4.5+"]', '2024-03-01',
 'name: api-throttling
-version: v1.0.0
+version: 1.0.0
 description: Advanced API throttling policy
 configuration:
   properties:
@@ -349,11 +358,11 @@ configuration:
       default: ""
 enforcement:
   type: "request"
-  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/api-throttling/v1.0.0'),
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/api-throttling/1.0.0'),
 
-('api-throttling', 'v2.0.0', true, 'API Throttling Policy', 'WSO2', 'Next-generation throttling with machine learning capabilities', '["traffic-control", "performance", "ml"]', '["throttling", "burst", "dynamic", "ml", "adaptive"]', 'api-throttling/v2.0.0/assets/icon.svg', 'api-throttling/v2.0.0/assets/banner.png', '["apim-4.5+"]', '2024-07-10',
+('api-throttling', '2.0.0', true, 'API Throttling Policy', 'WSO2', 'Next-generation throttling with machine learning capabilities', '["traffic-control", "performance", "ml"]', '["throttling", "burst", "dynamic", "ml", "adaptive"]', 'api-throttling/2.0.0/assets/icon.svg', 'api-throttling/2.0.0/assets/banner.png', '["apim-4.5+"]', '2024-07-10',
 'name: api-throttling
-version: v2.0.0
+version: 2.0.0
 description: Advanced throttling with ML-based adaptive limits
 configuration:
   properties:
@@ -397,12 +406,12 @@ configuration:
           default: 0.1
 enforcement:
   type: "request"
-  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/api-throttling/v2.0.0'),
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/api-throttling/2.0.0'),
 
 -- Request Transformation Policy Versions
-('request-transformation', 'v1.0.0', false, 'Request Transformation Policy', 'Community', 'Transforms incoming API requests including headers, query parameters, and request body', '["transformation", "mediation"]', '["transform", "headers", "body"]', 'request-transformation/v1.0.0/assets/icon.svg', 'request-transformation/v1.0.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-02-20',
+('request-transformation', '1.0.0', false, 'Request Transformation Policy', 'Community', 'Transforms incoming API requests including headers, query parameters, and request body', '["transformation", "mediation"]', '["transform", "headers", "body"]', 'request-transformation/1.0.0/assets/icon.svg', 'request-transformation/1.0.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-02-20',
 'name: request-transformation
-version: v1.0.0
+version: 1.0.0
 description: Basic request transformation policy
 configuration:
   properties:
@@ -450,11 +459,11 @@ configuration:
           default: ""
 enforcement:
   type: "request"
-  stage: "pre"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/request-transformation/v1.0.0'),
+  stage: "pre"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/request-transformation/1.0.0'),
 
-('request-transformation', 'v1.5.0', true, 'Request Transformation Policy', 'Community', 'Enhanced request transformation with conditional logic and templating', '["transformation", "mediation"]', '["transform", "headers", "body", "conditional", "template"]', 'request-transformation/v1.5.0/assets/icon.svg', 'request-transformation/v1.5.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-05-30',
+('request-transformation', '1.5.0', true, 'Request Transformation Policy', 'Community', 'Enhanced request transformation with conditional logic and templating', '["transformation", "mediation"]', '["transform", "headers", "body", "conditional", "template"]', 'request-transformation/1.5.0/assets/icon.svg', 'request-transformation/1.5.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-05-30',
 'name: request-transformation
-version: v1.5.0
+version: 1.5.0
 description: Enhanced transformation with conditional logic
 configuration:
   properties:
@@ -522,12 +531,12 @@ configuration:
             type: object
 enforcement:
   type: "request"
-  stage: "pre"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/request-transformation/v1.5.0'),
+  stage: "pre"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/request-transformation/1.5.0'),
 
 -- OAuth2 Validation Policy Versions
-('oauth2-validation', 'v1.0.0', true, 'OAuth2 Validation Policy', 'WSO2', 'Validates OAuth2 access tokens with introspection support', '["security", "authentication"]', '["oauth2", "token", "introspection"]', 'oauth2-validation/v1.0.0/assets/icon.svg', 'oauth2-validation/v1.0.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-04-05',
+('oauth2-validation', '1.0.0', true, 'OAuth2 Validation Policy', 'WSO2', 'Validates OAuth2 access tokens with introspection support', '["security", "authentication"]', '["oauth2", "token", "introspection"]', 'oauth2-validation/1.0.0/assets/icon.svg', 'oauth2-validation/1.0.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-04-05',
 'name: oauth2-validation
-version: v1.0.0
+version: 1.0.0
 description: OAuth2 token validation policy
 configuration:
   properties:
@@ -567,12 +576,12 @@ configuration:
       default: []
 enforcement:
   type: "request"
-  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/oauth2-validation/v1.0.0'),
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/oauth2-validation/1.0.0'),
 
 -- Response Caching Policy Versions
-('response-caching', 'v1.0.0', false, 'Response Caching Policy', 'Community', 'Caches API responses to improve performance and reduce backend load', '["performance", "caching"]', '["cache", "response", "performance"]', 'response-caching/v1.0.0/assets/icon.svg', 'response-caching/v1.0.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-03-10',
+('response-caching', '1.0.0', false, 'Response Caching Policy', 'Community', 'Caches API responses to improve performance and reduce backend load', '["performance", "caching"]', '["cache", "response", "performance"]', 'response-caching/1.0.0/assets/icon.svg', 'response-caching/1.0.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-03-10',
 'name: response-caching
-version: v1.0.0
+version: 1.0.0
 description: Basic response caching policy
 configuration:
   properties:
@@ -606,11 +615,11 @@ configuration:
       default: ["User-Agent", "Accept-Encoding"]
 enforcement:
   type: "response"
-  stage: "post"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/response-caching/v1.0.0'),
+  stage: "post"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/response-caching/1.0.0'),
 
-('response-caching', 'v1.1.0', true, 'Response Caching Policy', 'Community', 'Enhanced response caching with conditional caching and cache invalidation', '["performance", "caching"]', '["cache", "response", "performance", "invalidation"]', 'response-caching/v1.1.0/assets/icon.svg', 'response-caching/v1.1.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-06-25',
+('response-caching', '1.1.0', true, 'Response Caching Policy', 'Community', 'Enhanced response caching with conditional caching and cache invalidation', '["performance", "caching"]', '["cache", "response", "performance", "invalidation"]', 'response-caching/1.1.0/assets/icon.svg', 'response-caching/1.1.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-06-25',
 'name: response-caching
-version: v1.1.0
+version: 1.1.0
 description: Enhanced caching with invalidation support
 configuration:
   properties:
@@ -666,12 +675,12 @@ configuration:
       default: []
 enforcement:
   type: "response"
-  stage: "post"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/response-caching/v1.1.0'),
+  stage: "post"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/response-caching/1.1.0'),
 
 -- IP Filtering Policy Versions  
-('ip-filtering', 'v1.0.0', true, 'IP Filtering Policy', 'WSO2', 'Allows or blocks requests based on client IP addresses with support for CIDR notation', '["security", "access-control"]', '["ip", "filter", "whitelist", "blacklist", "cidr"]', 'ip-filtering/v1.0.0/assets/icon.svg', 'ip-filtering/v1.0.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-02-28',
+('ip-filtering', '1.0.0', true, 'IP Filtering Policy', 'WSO2', 'Allows or blocks requests based on client IP addresses with support for CIDR notation', '["security", "access-control"]', '["ip", "filter", "whitelist", "blacklist", "cidr"]', 'ip-filtering/1.0.0/assets/icon.svg', 'ip-filtering/1.0.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-02-28',
 'name: ip-filtering
-version: v1.0.0
+version: 1.0.0
 description: IP-based access control policy
 configuration:
   properties:
@@ -707,12 +716,12 @@ configuration:
       default: "deny"
 enforcement:
   type: "request"
-  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/ip-filtering/v1.0.0'),
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/ip-filtering/1.0.0'),
 
 -- API Key Authentication Policy Versions
-('api-key-auth', 'v1.0.0', false, 'API Key Authentication Policy', 'WSO2', 'Validates API keys for simple authentication mechanism', '["security", "authentication"]', '["api-key", "auth", "simple"]', 'api-key-auth/v1.0.0/assets/icon.svg', 'api-key-auth/v1.0.0/assets/banner.png', '["apim-4.5+", "apim-4.4+", "apim-4.3+"]', '2024-01-10',
+('api-key-auth', '1.0.0', false, 'API Key Authentication Policy', 'WSO2', 'Validates API keys for simple authentication mechanism', '["security", "authentication"]', '["api-key", "auth", "simple"]', 'api-key-auth/1.0.0/assets/icon.svg', 'api-key-auth/1.0.0/assets/banner.png', '["apim-4.5+", "apim-4.4+", "apim-4.3+"]', '2024-01-10',
 'name: api-key-auth
-version: v1.0.0
+version: 1.0.0
 description: Basic API key authentication
 configuration:
   properties:
@@ -741,11 +750,11 @@ configuration:
       default: true
 enforcement:
   type: "request"
-  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/api-key-auth/v1.0.0'),
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/api-key-auth/1.0.0'),
 
-('api-key-auth', 'v2.0.0', true, 'API Key Authentication Policy', 'WSO2', 'Advanced API key authentication with key management and rotation support', '["security", "authentication"]', '["api-key", "auth", "rotation", "management"]', 'api-key-auth/v2.0.0/assets/icon.svg', 'api-key-auth/v2.0.0/assets/banner.png', '["apim-4.5+"]', '2024-05-15',
+('api-key-auth', '2.0.0', true, 'API Key Authentication Policy', 'WSO2', 'Advanced API key authentication with key management and rotation support', '["security", "authentication"]', '["api-key", "auth", "rotation", "management"]', 'api-key-auth/2.0.0/assets/icon.svg', 'api-key-auth/2.0.0/assets/banner.png', '["apim-4.5+"]', '2024-05-15',
 'name: api-key-auth
-version: v2.0.0
+version: 2.0.0
 description: Advanced API key authentication with key management
 configuration:
   properties:
@@ -799,13 +808,13 @@ configuration:
           default: 100
 enforcement:
   type: "request"
-  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/api-key-auth/v2.0.0');
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/api-key-auth/2.0.0');
 
 -- Insert policy documentation
 INSERT INTO policy_docs (policy_version_id, page, content_md) VALUES
--- Rate Limiting v1.0.0 docs
-((SELECT id FROM policy_version WHERE policy_name = 'rate-limiting' AND version = 'v1.0.0'), 'overview',
-'# Rate Limiting Policy v1.0.0
+-- Rate Limiting 1.0.0 docs
+((SELECT id FROM policy_version WHERE policy_name = 'rate-limiting' AND version = '1.0.0'), 'overview',
+'# Rate Limiting Policy 1.0.0
 
 ## Overview
 The Rate Limiting Policy controls the number of requests that can be made to an API within a specified time window. This helps prevent API abuse and ensures fair usage among consumers.
@@ -821,7 +830,7 @@ The Rate Limiting Policy controls the number of requests that can be made to an 
 - Ensuring fair usage among API consumers
 - Managing traffic during peak loads'),
 
-((SELECT id FROM policy_version WHERE policy_name = 'rate-limiting' AND version = 'v1.0.0'), 'configuration',
+((SELECT id FROM policy_version WHERE policy_name = 'rate-limiting' AND version = '1.0.0'), 'configuration',
 '# Configuration Guide
 
 ## Basic Configuration
@@ -846,30 +855,30 @@ timeUnit: "second"
 keyType: "api"
 ```'),
 
--- Rate Limiting v1.1.0 docs
-((SELECT id FROM policy_version WHERE policy_name = 'rate-limiting' AND version = 'v1.1.0'), 'overview',
-'# Rate Limiting Policy v1.1.0
+-- Rate Limiting 1.1.0 docs
+((SELECT id FROM policy_version WHERE policy_name = 'rate-limiting' AND version = '1.1.0'), 'overview',
+'# Rate Limiting Policy 1.1.0
 
 ## Overview
 Enhanced version of the Rate Limiting Policy with burst capacity support and improved error handling.
 
-## New Features in v1.1.0
+## New Features in 1.1.0
 - **Burst Capacity**: Allow temporary spikes above the normal limit
 - **Improved Error Handling**: Better error messages and status codes
 - **Enhanced Metrics**: More detailed monitoring capabilities
 
 ## Key Features
-- All features from v1.0.0
+- All features from 1.0.0
 - Configurable burst capacity
 - Better error responses
 - Enhanced monitoring and metrics
 
-## Migration from v1.0.0
-The v1.1.0 version is backward compatible with v1.0.0 configurations. Simply add the `burstCapacity` parameter to enable burst handling.'),
+## Migration from 1.0.0
+The 1.1.0 version is backward compatible with 1.0.0 configurations. Simply add the `burstCapacity` parameter to enable burst handling.'),
 
--- JWT Authentication v1.0.0 docs
-((SELECT id FROM policy_version WHERE policy_name = 'jwt-authentication' AND version = 'v1.0.0'), 'overview',
-'# JWT Authentication Policy v1.0.0
+-- JWT Authentication 1.0.0 docs
+((SELECT id FROM policy_version WHERE policy_name = 'jwt-authentication' AND version = '1.0.0'), 'overview',
+'# JWT Authentication Policy 1.0.0
 
 ## Overview
 The JWT Authentication Policy validates JSON Web Tokens (JWT) to authenticate API requests. It supports various signing algorithms and configurable validation parameters.
@@ -886,14 +895,14 @@ The JWT Authentication Policy validates JSON Web Tokens (JWT) to authenticate AP
 - Set appropriate token expiration times
 - Validate issuer and audience claims'),
 
--- CORS Policy v1.2.0 docs
-((SELECT id FROM policy_version WHERE policy_name = 'cors-policy' AND version = 'v1.2.0'), 'overview',
-'# CORS Policy v1.2.0
+-- CORS Policy 1.2.0 docs
+((SELECT id FROM policy_version WHERE policy_name = 'cors-policy' AND version = '1.2.0'), 'overview',
+'# CORS Policy 1.2.0
 
 ## Overview
 The CORS Policy manages Cross-Origin Resource Sharing headers to enable secure cross-origin requests to your APIs.
 
-## New Features in v1.2.0
+## New Features in 1.2.0
 - **Dynamic Origin Validation**: Use regex patterns for origin validation
 - **Wildcard Support**: Enhanced wildcard matching for origins
 - **Performance Improvements**: Optimized header processing
@@ -909,9 +918,9 @@ The CORS Policy manages Cross-Origin Resource Sharing headers to enable secure c
 - Be specific about allowed methods and headers
 - Test CORS configuration thoroughly'),
 
--- API Throttling v2.0.0 docs
-((SELECT id FROM policy_version WHERE policy_name = 'api-throttling' AND version = 'v2.0.0'), 'overview',
-'# API Throttling Policy v2.0.0
+-- API Throttling 2.0.0 docs
+((SELECT id FROM policy_version WHERE policy_name = 'api-throttling' AND version = '2.0.0'), 'overview',
+'# API Throttling Policy 2.0.0
 
 ## Overview
 Next-generation throttling policy with machine learning capabilities for adaptive rate limiting.

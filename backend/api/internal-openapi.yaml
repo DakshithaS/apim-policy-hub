@@ -1,0 +1,298 @@
+# Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com). All Rights Reserved.
+#
+# This software is the property of WSO2 LLC. and its suppliers, if any.
+# Dissemination of any information or reproduction of any material contained
+# herein in any form is strictly forbidden, unless permitted by WSO2 expressly.
+# You may not alter or remove any copyright or other notice from copies of this content.
+
+openapi: 3.0.3
+info:
+  title: Policy Hub Internal API v1
+  description: Internal API v1 for Policy Hub synchronization operations.
+  version: 1.0.0
+  contact:
+    name: WSO2
+    url: https://wso2.com
+
+servers:
+  - url: http://localhost:8080/api/v1/internal
+    description: Local development server
+  - url: https://internal.api.policyhub.wso2.com/api/v1/internal
+    description: Internal server
+
+tags:
+  - name: sync
+    description: Internal sync operations
+  - name: health
+    description: Health check operations
+
+paths:
+  /health:
+    get:
+      tags:
+        - health
+      summary: Health check endpoint
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /policies/{name}/versions/{version}:
+    post:
+      tags:
+        - sync
+      summary: Create policy version from external source
+      operationId: createPolicyVersion
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Policy name
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          description: Policy version
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncRequest'
+      responses:
+        '200':
+          description: Policy synced successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncStatusResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Version already exists (immutable)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    BaseResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          nullable: true
+        error:
+          $ref: '#/components/schemas/ErrorObject'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+      required:
+        - success
+        - meta
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        data:
+          nullable: true
+          example: null
+        error:
+          $ref: '#/components/schemas/ErrorObject'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+      required:
+        - success
+        - meta
+
+    HealthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              example: ok
+        error:
+          nullable: true
+          example: null
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+      required:
+        - success
+        - meta
+
+    ErrorObject:
+      type: object
+      properties:
+        code:
+          type: string
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          example: Invalid request parameters
+        details:
+          type: object
+          nullable: true
+      required:
+        - code
+        - message
+
+    ResponseMeta:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+      required:
+        - timestamp
+
+    PolicyMetadata:
+      type: object
+      properties:
+        name:
+          type: string
+          example: rate-limit
+        displayName:
+          type: string
+          example: Rate Limiting Policy
+        provider:
+          type: string
+          example: WSO2
+        description:
+          type: string
+          example: Rate limit traffic per minute
+        categories:
+          type: array
+          items:
+            type: string
+          example: ["security", "traffic-control"]
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["limit", "quota"]
+        supportedPlatforms:
+          type: array
+          items:
+            type: string
+          example: ["apim-4.5+"]
+        logoUrl:
+          type: string
+          format: uri
+          example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/icon.svg
+        bannerUrl:
+          type: string
+          format: uri
+          example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/banner.png
+      required:
+        - name
+        - displayName
+        - provider
+
+    SyncRequest:
+      type: object
+      properties:
+        policyName:
+          type: string
+          example: rate-limit
+        version:
+          type: string
+          example: "1.1.0"
+        sourceType:
+          type: string
+          enum: [github]
+          example: github
+        downloadUrl:
+          type: string
+          format: uri
+          example: https://github.com/wso2/policies/rate-limit
+        definitionUrl:
+          type: string
+          format: uri
+          description: URL to raw policy definition file (YAML format only)
+          example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/policy-definition.yml
+        metadata:
+          allOf:
+            - $ref: '#/components/schemas/PolicyMetadata'
+          description: Policy metadata
+        documentation:
+          type: object
+          description: Mapping of doc types to absolute URLs of markdown documentation files
+          properties:
+            overview:
+              type: string
+              example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/overview.md
+            configuration:
+              type: string
+              example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/configuration.md
+            examples:
+              type: string
+              example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/examples.md
+            faq:
+              type: string
+              example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/faq.md
+          required: []  # Optional per type
+        assetsBaseUrl:
+          type: string
+          format: uri
+          example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/assets/
+      required:
+        - sourceType
+        - downloadUrl
+        - definitionUrl
+
+    SyncStatusResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/SyncStatus'
+        error:
+          nullable: true
+          example: null
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+      required:
+        - success
+        - meta
+
+    SyncStatus:
+      type: object
+      properties:
+        policyName:
+          type: string
+          example: rate-limit
+        version:
+          type: string
+          example: "1.1.0"
+        status:
+          type: string
+          enum: [synced]
+          example: synced
+      required:
+        - policyName
+        - version
+        - status

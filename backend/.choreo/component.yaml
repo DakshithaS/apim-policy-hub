@@ -1,0 +1,47 @@
+# Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com). All Rights Reserved.
+#
+# This software is the property of WSO2 LLC. and its suppliers, if any.
+# Dissemination of any information or reproduction of any material contained
+# herein in any form is strictly forbidden, unless permitted by WSO2 expressly.
+# You may not alter or remove any copyright or other notice from copies of this content.
+
+
+
+# +required The configuration file schema version
+schemaVersion: 1.2
+
+# +required Incoming connection details for the component
+endpoints:
+  # +required Unique name for the endpoint.
+  # This name will be used when generating the managed API
+  - name: policy-hub-public
+    # +optional Display name for the endpoint.
+    displayName: Policy Hub Public API
+    # +required Service section has the user service endpoint details
+    service:
+      # +optional Base path of the API that gets exposed via the endpoint.
+      # This is mandatory if the endpoint type is set to REST or GraphQL.
+      basePath: /api/v1
+      # +required Numeric port value that gets exposed via the endpoint
+      port: 8080
+    # +required Type of traffic that the endpoint is accepting.
+    # Allowed values: REST, GraphQL, GRPC, TCP, UDP.
+    type: REST
+    # +optional Network level visibilities of the endpoint.
+    # Accepted values: Project|Organization|Public(Default).
+    networkVisibilities:
+      - Public
+    # +optional The path to the schema definition file.
+    # Defaults to wildcard route if not specified.
+    # This is only applicable to REST endpoint types.
+    # The path should be relative to the docker context.
+    schemaFilePath: api/public-openapi.yaml
+  - name: policy-hub-internal
+    displayName: Policy Hub Internal API
+    service:
+      basePath: /api/v1/internal
+      port: 8080
+    type: REST
+    networkVisibilities:
+      - Public
+    schemaFilePath: api/internal-openapi.yaml

@@ -1,3 +1,12 @@
+/*
+ * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com). All Rights Reserved.
+ *
+ * This software is the property of WSO2 LLC. and its suppliers, if any.
+ * Dissemination of any information or reproduction of any material contained
+ * herein in any form is strictly forbidden, unless permitted by WSO2 expressly.
+ * You may not alter or remove any copyright or other notice from copies of this content.
+ */
+
 -- Policy Hub Database Schema (Single Table Architecture)
 
 -- Single policy_version table with all metadata
@@ -22,10 +31,30 @@ CREATE TABLE IF NOT EXISTS policy_version (
 	definition_yaml TEXT NOT NULL,
 	icon_path VARCHAR(500),
 	source_type VARCHAR(50),
-	source_url VARCHAR(1000),
+	download_url VARCHAR(1000),
 	
 	created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 	updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+	
+	-- Computed columns for semantic version parts (assumes format: major.minor.patch)
+	major_version INT GENERATED ALWAYS AS (
+		CASE 
+			WHEN version ~ '^\d+\.\d+\.\d+' THEN split_part(version, '.', 1)::INT 
+			ELSE NULL 
+		END
+	) STORED,
+	minor_version INT GENERATED ALWAYS AS (
+		CASE 
+			WHEN version ~ '^\d+\.\d+\.\d+' THEN split_part(version, '.', 2)::INT 
+			ELSE NULL 
+		END
+	) STORED,
+	patch_version INT GENERATED ALWAYS AS (
+		CASE 
+			WHEN version ~ '^\d+\.\d+\.\d+' THEN split_part(version, '.', 3)::INT 
+			ELSE NULL 
+		END
+	) STORED,
 	
 	UNIQUE(policy_name, version)
 );
@@ -66,3 +95,10 @@ ON policy_version (policy_name, version);
 
 CREATE INDEX IF NOT EXISTS idx_policy_version_created_at ON policy_version (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_policy_docs_page ON policy_docs (policy_version_id, page);
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_policy_version_semver 
+ON policy_version (policy_name, major_version DESC, minor_version DESC, patch_version DESC);
+
+CREATE INDEX IF NOT EXISTS idx_policy_version_patch_lookup 
+ON policy_version (policy_name, major_version, minor_version, patch_version DESC);

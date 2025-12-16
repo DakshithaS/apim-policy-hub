@@ -1,3 +1,12 @@
+/*
+ * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com). All Rights Reserved.
+ *
+ * This software is the property of WSO2 LLC. and its suppliers, if any.
+ * Dissemination of any information or reproduction of any material contained
+ * herein in any form is strictly forbidden, unless permitted by WSO2 expressly.
+ * You may not alter or remove any copyright or other notice from copies of this content.
+ */
+
 package errs
 
 import (
@@ -11,7 +20,6 @@ import (
 type Code string
 
 const (
-	CodePolicyNotFound        Code = "POLICY_NOT_FOUND"
 	CodePolicyVersionNotFound Code = "POLICY_VERSION_NOT_FOUND"
 	CodeDocNotFound           Code = "DOC_NOT_FOUND"
 	CodeValidationError       Code = "VALIDATION_ERROR"
@@ -91,15 +99,6 @@ func SanitizeDatabaseError(operation string) *AppError {
 		Message:    "A database error occurred while processing your request",
 		Details:    map[string]any{"operation": operation},
 	}
-}
-
-// PolicyNotFound creates a policy not found error
-func PolicyNotFound(name string) *AppError {
-	return NewNotFoundError(
-		CodePolicyNotFound,
-		"Policy not found",
-		map[string]any{"policyName": name},
-	)
 }
 
 // PolicyVersionNotFound creates a policy version not found error

@@ -94,7 +94,7 @@ curl -X GET "$API_HOST/policies?search=rate&category=security&provider=WSO2&page
       "supportedPlatforms": ["apim-4.5+"],
       "logoUrl": "/assets/rate-limit/icon.svg",
       "bannerUrl": "/assets/rate-limit/banner.png",
-      "latestVersion": "v1.1.0"
+      "latestVersion": "1.1.0"
     }
   ],
   "error": null,
@@ -116,33 +116,57 @@ curl -X GET "$API_HOST/policies?search=rate&category=security&provider=WSO2&page
 
 ### Batch Get Policies
 
-**POST** `/policies/batch`
+**POST** `/policies/resolve`
 
-Retrieve multiple policies by name and version in a single request.
+Retrieve multiple policies in a single request with strategy-based version selection.
 
 **Request Body:**
 ```json
 {
   "policies": [
     {
-      "name": "rate-limit",
-      "version": "v1.1.0"
+      "name": "rate-limiting",
+      "retrievalStrategy": "exact",
+      "baseVersion": "1.1.0"
     },
     {
-      "name": "jwt-validation",
-      "version": "latest"
+      "name": "jwt-authentication",
+      "retrievalStrategy": "latest_patch",
+      "baseVersion": "2.1"
+    },
+    {
+      "name": "cors-policy",
+      "retrievalStrategy": "latest_minor",
+      "baseVersion": "1"
+    },
+    {
+      "name": "api-throttling",
+      "retrievalStrategy": "latest_major"
     }
   ]
 }
 ```
 
+**Retrieval Strategies:**
+- `exact`: Get the exact version specified in `baseVersion` (required)
+- `latest_patch`: Get the latest patch version within major.minor from `baseVersion` (e.g., "2.1" → latest 2.1.x)
+- `latest_minor`: Get the latest minor version within major from `baseVersion` (e.g., "2" → latest 2.x.x)
+- `latest_major`: Get the latest major version (no `baseVersion` needed)
+
 ```bash
-curl -X POST "$API_HOST/policies/batch" \
+curl -X POST "$API_HOST/policies/resolve" \
   -H "Content-Type: application/json" \
   -d '{
     "policies": [
-      {"name": "rate-limit", "version": "v1.1.0"},
-      {"name": "jwt-validation", "version": "latest"}
+      {
+        "name": "rate-limiting",
+        "retrievalStrategy": "exact",
+        "baseVersion": "1.1.0"
+      },
+      {
+        "name": "jwt-authentication",
+        "retrievalStrategy": "latest_major"
+      }
     ]
   }'
 ```
@@ -153,18 +177,51 @@ curl -X POST "$API_HOST/policies/batch" \
   "success": true,
   "data": [
     {
-      "name": "rate-limit",
-      "version": "v1.1.0",
-      "definition": { ... },
-      "metadata": { ... },
+      "name": "rate-limiting",
+      "version": "1.1.0",
       "sourceType": "github",
-      "sourceUrl": "https://github.com/wso2/policies/rate-limit"
+      "downloadUrl": "https://github.com/wso2/policy-hub/tree/main/storage/rate-limiting/1.1.0",
+      "definition": {
+        "yaml": "name: rate-limiting\nversion: 1.1.0\n..."
+      },
+      "metadata": {
+        "displayName": "Rate Limiting Policy",
+        "provider": "WSO2",
+        "description": "Controls the number of requests per time window",
+        "categories": ["security", "traffic-control"],
+        "supportedPlatforms": ["apim-4.5+"]
+      }
+    },
+    {
+      "name": "jwt-authentication",
+      "version": "2.1.0",
+      "sourceType": "github",
+      "downloadUrl": "https://github.com/wso2/policy-hub/tree/main/storage/jwt-authentication/2.1.0",
+      "definition": {
+        "yaml": "name: jwt-authentication\nversion: 2.1.0\n..."
+      },
+      "metadata": {
+        "displayName": "JWT Authentication Policy",
+        "provider": "WSO2",
+        "description": "Validates JSON Web Tokens (JWT)",
+        "categories": ["security", "authentication"],
+        "supportedPlatforms": ["apim-4.5+"]
+      }
     }
   ],
   "error": null,
-  "meta": { ... }
+  "meta": {
+    "trace_id": "abc123",
+    "timestamp": "2025-12-16T10:00:00Z",
+    "request_id": "xyz123"
+  }
 }
 ```
+
+**Constraints:**
+- Maximum 100 policies per batch request
+- Policies that cannot be found are silently omitted from response
+- Version format must be `d.d.d` (e.g., "1.2.3", not "v1.2.3")
 
 ### Get Categories
 
@@ -233,7 +290,7 @@ curl -X GET "$API_HOST/policies/platforms"
 Get policy summary information.
 
 ```bash
-curl -X GET "$API_HOST/policies/rate-limit"
+curl -X GET "$API_HOST/policies/rate-limiting"
 ```
 
 **Response (200):**
@@ -264,7 +321,7 @@ curl -X GET "$API_HOST/policies/rate-limit"
 List all versions of a policy.
 
 ```bash
-curl -X GET "$API_HOST/policies/rate-limit/versions?page=1&pageSize=10"
+curl -X GET "$API_HOST/policies/rate-limiting/versions?page=1&pageSize=10"
 ```
 
 **Response (200):**
@@ -307,7 +364,7 @@ curl -X GET "$API_HOST/policies/rate-limit/versions?page=1&pageSize=10"
 Get the latest version information for a policy.
 
 ```bash
-curl -X GET "$API_HOST/policies/rate-limit/versions/latest"
+curl -X GET "$API_HOST/policies/rate-limiting/versions/latest"
 ```
 
 **Response (200):**
@@ -331,7 +388,7 @@ curl -X GET "$API_HOST/policies/rate-limit/versions/latest"
 Get detailed information about a specific policy version.
 
 ```bash
-curl -X GET "$API_HOST/policies/rate-limit/versions/v1.1.0"
+curl -X GET "$API_HOST/policies/rate-limiting/versions/1.1.0"
 ```
 
 **Response (200):**
@@ -350,7 +407,7 @@ curl -X GET "$API_HOST/policies/rate-limit/versions/v1.1.0"
     "logoUrl": "/assets/rate-limit/icon.svg",
     "bannerUrl": "/assets/rate-limit/banner.png",
     "sourceType": "github",
-    "sourceUrl": "https://github.com/wso2/policies/rate-limit",
+    "downloadUrl": "https://github.com/wso2/policies/rate-limit",
     "createdAt": "2025-12-14T10:00:00Z"
   },
   "error": null,
@@ -365,7 +422,7 @@ curl -X GET "$API_HOST/policies/rate-limit/versions/v1.1.0"
 Get the JSON schema definition for a policy version.
 
 ```bash
-curl -X GET "$API_HOST/policies/rate-limit/versions/v1.1.0/definition"
+curl -X GET "$API_HOST/policies/rate-limiting/versions/1.1.0/definition"
 ```
 
 **Response (200):**
@@ -395,7 +452,7 @@ curl -X GET "$API_HOST/policies/rate-limit/versions/v1.1.0/definition"
 Get policy data formatted for API engine consumption.
 
 ```bash
-curl -X GET "$API_HOST/policies/rate-limit/versions/v1.1.0/engine"
+curl -X GET "$API_HOST/policies/rate-limiting/versions/1.1.0/engine"
 ```
 
 **Response (200):**
@@ -408,12 +465,121 @@ curl -X GET "$API_HOST/policies/rate-limit/versions/v1.1.0/engine"
     "definition": { ... },
     "metadata": { ... },
     "sourceType": "github",
-    "sourceUrl": "https://github.com/wso2/policies/rate-limit"
+    "downloadUrl": "https://github.com/wso2/policies/rate-limit"
   },
   "error": null,
   "meta": { ... }
 }
 ```
+
+### Batch Get Policies
+
+**POST** `/policies/resolve`
+
+Retrieve multiple policies in a single request with strategy-based version selection.
+
+**Request Body:**
+```json
+{
+  "policies": [
+    {
+      "name": "rate-limiting",
+      "retrievalStrategy": "exact",
+      "baseVersion": "1.1.0"
+    },
+    {
+      "name": "jwt-authentication",
+      "retrievalStrategy": "latest_patch",
+      "baseVersion": "2.1"
+    },
+    {
+      "name": "cors-policy",
+      "retrievalStrategy": "latest_minor",
+      "baseVersion": "1"
+    },
+    {
+      "name": "api-throttling",
+      "retrievalStrategy": "latest_major"
+    }
+  ]
+}
+```
+
+**Retrieval Strategies:**
+- `exact`: Get the exact version specified in `baseVersion` (required)
+- `latest_patch`: Get the latest patch version within major.minor from `baseVersion` (e.g., "2.1" → latest 2.1.x)
+- `latest_minor`: Get the latest minor version within major from `baseVersion` (e.g., "2" → latest 2.x.x)
+- `latest_major`: Get the latest major version (no `baseVersion` needed)
+
+```bash
+curl -X POST "$API_HOST/policies/resolve" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "policies": [
+      {
+        "name": "rate-limiting",
+        "retrievalStrategy": "exact",
+        "baseVersion": "1.1.0"
+      },
+      {
+        "name": "jwt-authentication",
+        "retrievalStrategy": "latest_major"
+      }
+    ]
+  }'
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "name": "rate-limiting",
+      "version": "1.1.0",
+      "sourceType": "github",
+      "downloadUrl": "https://github.com/wso2/policy-hub/tree/main/storage/rate-limiting/1.1.0",
+      "definition": {
+        "yaml": "name: rate-limiting\nversion: 1.1.0\n..."
+      },
+      "metadata": {
+        "displayName": "Rate Limiting Policy",
+        "provider": "WSO2",
+        "description": "Controls the number of requests per time window",
+        "categories": ["security", "traffic-control"],
+        "supportedPlatforms": ["apim-4.5+"]
+      }
+    },
+    {
+      "name": "jwt-authentication",
+      "version": "2.1.0",
+      "sourceType": "github",
+      "downloadUrl": "https://github.com/wso2/policy-hub/tree/main/storage/jwt-authentication/2.1.0",
+      "definition": {
+        "yaml": "name: jwt-authentication\nversion: 2.1.0\n..."
+      },
+      "metadata": {
+        "displayName": "JWT Authentication Policy",
+        "provider": "WSO2",
+        "description": "Validates JSON Web Tokens (JWT)",
+        "categories": ["security", "authentication"],
+        "supportedPlatforms": ["apim-4.5+"]
+      }
+    }
+  ],
+  "error": null,
+  "meta": {
+    "trace_id": "abc123",
+    "timestamp": "2025-12-16T10:00:00Z",
+    "request_id": "xyz123"
+  }
+}
+```
+
+**Constraints:**
+- Maximum 100 policies per batch request
+- Policies that cannot be found are silently omitted from response
+- Version format must be `d.d.d` (e.g., "1.2.3", not "v1.2.3")
 
 ### Get All Documentation
 
@@ -422,7 +588,7 @@ curl -X GET "$API_HOST/policies/rate-limit/versions/v1.1.0/engine"
 List all available documentation pages for a policy version.
 
 ```bash
-curl -X GET "$API_HOST/policies/rate-limit/versions/v1.1.0/docs"
+curl -X GET "$API_HOST/policies/rate-limiting/versions/1.1.0/docs"
 ```
 
 **Response (200):**
@@ -453,7 +619,7 @@ curl -X GET "$API_HOST/policies/rate-limit/versions/v1.1.0/docs"
 Get a specific documentation page. Valid page types: `overview`, `configuration`, `examples`, `faq`, `troubleshooting`.
 
 ```bash
-curl -X GET "$API_HOST/policies/rate-limit/versions/v1.1.0/docs/overview"
+curl -X GET "$API_HOST/policies/rate-limiting/versions/1.1.0/docs/overview"
 ```
 
 **Response (200):**
@@ -481,10 +647,10 @@ Sync a policy from an external source. Requires API key authentication.
 **Request Body:**
 ```json
 {
-  "policyName": "rate-limit",
-  "version": "v1.1.0",
+  "policyName": "rate-limiting",
+  "version": "1.1.0",
   "sourceType": "github",
-  "sourceUrl": "https://github.com/wso2/policies/rate-limit",
+  "downloadUrl": "https://github.com/wso2/policies/rate-limit",
   "definitionUrl": "https://raw.githubusercontent.com/wso2/policies/rate-limit/v1.1.0/policy-definition.yml",
   "metadata": {
     "name": "rate-limit",
@@ -498,11 +664,11 @@ Sync a policy from an external source. Requires API key authentication.
     "bannerUrl": "https://raw.githubusercontent.com/wso2/policies/rate-limit/v1.1.0/banner.png"
   },
   "documentation": {
-    "overview": "https://raw.githubusercontent.com/wso2/policies/rate-limit/v1.1.0/docs/overview.md",
-    "configuration": "https://raw.githubusercontent.com/wso2/policies/rate-limit/v1.1.0/docs/configuration.md",
-    "examples": "https://raw.githubusercontent.com/wso2/policies/rate-limit/v1.1.0/docs/examples.md",
-    "faq": "https://raw.githubusercontent.com/wso2/policies/rate-limit/v1.1.0/docs/faq.md",
-    "troubleshooting": "https://raw.githubusercontent.com/wso2/policies/rate-limit/v1.1.0/docs/troubleshooting.md"
+    "overview": "https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/overview.md",
+    "configuration": "https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/configuration.md",
+    "examples": "https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/examples.md",
+    "faq": "https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/faq.md",
+    "troubleshooting": "https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/troubleshooting.md"
   },
   "assetsBaseUrl": "https://raw.githubusercontent.com/wso2/policies/rate-limit/v1.1.0/assets/"
 }
@@ -510,13 +676,12 @@ Sync a policy from an external source. Requires API key authentication.
 
 ```bash
 curl -X POST "$API_HOST/sync" \
-  -H "X-API-Key: $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "policyName": "rate-limit",
     "version": "v1.1.0",
     "sourceType": "github",
-    "sourceUrl": "https://github.com/wso2/policies/rate-limit",
+    "downloadUrl": "https://github.com/wso2/policies/rate-limit",
     "definitionUrl": "https://raw.githubusercontent.com/wso2/policies/rate-limit/v1.1.0/policy-definition.yml",
     "metadata": {
       "name": "rate-limit",
@@ -526,8 +691,8 @@ curl -X POST "$API_HOST/sync" \
       "categories": ["security", "traffic-control"],
       "tags": ["limit", "quota"],
       "supportedPlatforms": ["apim-4.5+"],
-      "logoUrl": "https://raw.githubusercontent.com/wso2/policies/rate-limit/v1.1.0/icon.svg",
-      "bannerUrl": "https://raw.githubusercontent.com/wso2/policies/rate-limit/v1.1.0/banner.png"
+      "logoUrl": "https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/icon.svg",
+      "bannerUrl": "https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/banner.png"
     },
     "documentation": {
       "overview": "https://raw.githubusercontent.com/wso2/policies/rate-limit/v1.1.0/docs/overview.md",
@@ -613,8 +778,8 @@ curl -X POST "$API_HOST/sync" \
     "code": "VERSION_IMMUTABLE",
     "message": "Policy version is immutable and already exists",
     "details": {
-      "policyName": "rate-limit",
-      "version": "v1.1.0"
+      "policyName": "rate-limiting",
+      "version": "1.1.0"
     }
   },
   "meta": { ... }

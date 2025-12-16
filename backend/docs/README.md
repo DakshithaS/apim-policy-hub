@@ -177,7 +177,7 @@ make lint           # Run linter
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| POST | `/sync` | Sync policy from external source | X-API-Key |
+| POST | `/sync` | Sync policy from external source | - |
 
 ### Query Parameters
 
@@ -241,13 +241,12 @@ The `/sync` endpoint allows CI/CD pipelines to register or update policies:
 
 ```bash
 curl -X POST http://localhost:8080/sync \
-  -H "X-API-Key: your-api-key" \
   -H "Content-Type: application/json" \
   -d '{
     "policyName": "rate-limit",
     "version": "v1.1.0",
     "sourceType": "github",
-    "sourceUrl": "https://github.com/wso2/policies/rate-limit",
+    "downloadUrl": "https://github.com/wso2/policies/rate-limit",
     "definitionUrl": "https://raw.githubusercontent.com/.../policy-definition.json",
     "metadataUrl": "https://raw.githubusercontent.com/.../metadata.json",
     "docsBaseUrl": "https://raw.githubusercontent.com/.../docs/",
@@ -323,7 +322,6 @@ Stores Markdown documentation per version.
 
 ## 🔐 Security
 
-- **API Key Authentication**: Sync endpoint requires `X-API-Key` header
 - **Input Validation**: All inputs validated using Gin binding
 - **SQL Injection Protection**: Using parameterized queries via sqlc
 - **Error Sanitization**: Internal errors don't leak sensitive info
@@ -384,20 +382,12 @@ SERVER_PORT=8080
 GIN_MODE=debug
 
 # Database
-DB_DRIVER=postgres
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=policyhub
 DB_PASSWORD=policyhub
 DB_NAME=policyhub
 DB_SSLMODE=disable
-
-# Storage
-STORAGE_TYPE=filesystem
-STORAGE_PATH=./storage
-
-# Security
-SYNC_API_KEY=your-secure-api-key-here
 
 # Logging
 LOG_LEVEL=debug
@@ -414,7 +404,6 @@ docker build -t policyhub:latest .
 
 ### Production Checklist
 
-- [ ] Set strong `SYNC_API_KEY`
 - [ ] Use `GIN_MODE=release`
 - [ ] Set `LOG_LEVEL=info`
 - [ ] Configure PostgreSQL with SSL (`DB_SSLMODE=require`)

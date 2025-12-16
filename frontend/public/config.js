@@ -7,21 +7,6 @@
  * You may not alter or remove any copyright or other notice from copies of this content.
  */
 
-/// <reference types="vite/client" />
-
-interface ImportMetaEnv {
-  readonly VITE_API_URL?: string
-  // Add other environment variables as needed
-}
-
-interface ImportMeta {
-  readonly env: ImportMetaEnv
-}
-
-declare global {
-  interface Window {
-    config: {
-      apiUrl: string;
-    };
-  }
-}
+window.config = {
+  apiUrl: 'http://localhost:8080/api/v1',
+};

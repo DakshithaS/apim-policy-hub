@@ -7,12 +7,11 @@
 
 openapi: 3.0.3
 info:
-  title: Policy Hub API v1
+  title: Policy Hub Public API v1
   description: |
-    The Policy Hub API v1 is a comprehensive platform for managing and distributing API platform policies.
+    The Policy Hub Public API v1 is a comprehensive platform for managing and distributing API platform policies.
     It provides endpoints for discovering, versioning, and retrieving policy definitions, metadata, and documentation.
-    Key features include policy search and filtering, version management, batch retrieval, documentation access,
-    and synchronization with external policy repositories.
+    Key features include policy search and filtering, version management, batch retrieval, and documentation access.
   version: 1.0.0
   contact:
     name: WSO2
@@ -31,8 +30,6 @@ tags:
     description: Policy version operations
   - name: docs
     description: Documentation operations
-  - name: sync
-    description: Internal sync operations
 
 paths:
   /policies:
@@ -423,51 +420,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /policies/{name}/versions/{version}/sync:
-    post:
-      tags:
-        - sync
-      summary: Create policy version from external source
-      operationId: createPolicyVersion
-      parameters:
-        - name: name
-          in: path
-          required: true
-          description: Policy name
-          schema:
-            type: string
-        - name: version
-          in: path
-          required: true
-          description: Policy version
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PolicySyncRequest'
-      responses:
-        '200':
-          description: Policy synced successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SyncStatusResponse'
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '409':
-          description: Version already exists (immutable)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
 components:
   schemas:
     BaseResponse:
@@ -741,23 +693,6 @@ components:
         - success
         - meta
 
-    SyncStatusResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        data:
-          $ref: '#/components/schemas/SyncStatus'
-        error:
-          nullable: true
-          example: null
-        meta:
-          $ref: '#/components/schemas/ResponseMeta'
-      required:
-        - success
-        - meta
-
     PolicyWithDefinitionResponse:
       type: object
       properties:
@@ -981,77 +916,6 @@ components:
         - format
         - content
 
-    PolicySyncRequest:
-      type: object
-      properties:
-        policyName:
-          type: string
-          example: rate-limit
-        version:
-          type: string
-          example: v1.1.0
-        sourceType:
-          type: string
-          enum: [github]
-          example: github
-        downloadUrl:
-          type: string
-          format: uri
-          example: https://github.com/wso2/policies/rate-limit
-        definitionUrl:
-          type: string
-          format: uri
-          description: URL to raw policy definition file (YAML format only)
-          example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/policy-definition.yml
-        metadata:
-          allOf:
-            - $ref: '#/components/schemas/PolicyMetadata'
-          description: Policy metadata
-        documentation:
-          type: object
-          description: Mapping of doc types to absolute URLs of markdown documentation files
-          properties:
-            overview:
-              type: string
-              example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/overview.md
-            configuration:
-              type: string
-              example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/configuration.md
-            examples:
-              type: string
-              example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/examples.md
-            faq:
-              type: string
-              example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/faq.md
-          required: []  # Optional per type
-        assetsBaseUrl:
-          type: string
-          format: uri
-          example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/assets/
-      required:
-        - sourceType
-        - downloadUrl
-        - definitionUrl
-        - metadata
-
-    SyncResponse:
-      type: object
-      properties:
-        policyName:
-          type: string
-          example: rate-limit
-        version:
-          type: string
-          example: v1.1.0
-        status:
-          type: string
-          enum: [synced]
-          example: synced
-      required:
-        - policyName
-        - version
-        - status
-
     ResolvePolicyRequest:
       type: object
       properties:
@@ -1171,21 +1035,3 @@ components:
         - page
         - format
         - content
-
-    SyncStatus:
-      type: object
-      properties:
-        policyName:
-          type: string
-          example: rate-limit
-        version:
-          type: string
-          example: v1.1.0
-        status:
-          type: string
-          enum: [synced]
-          example: synced
-      required:
-        - policyName
-        - version
-        - status

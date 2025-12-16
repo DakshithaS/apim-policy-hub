@@ -7,6 +7,9 @@ The Policy Hub Backend provides a comprehensive API for managing API management 
 ### Policy Management
 - **Policy Discovery**: Browse and search through a catalog of policies with filtering by categories, providers, and platforms.
 - **Version Management**: Handle multiple versions of policies with clear versioning and release notes.
+- **Resolve Processing**: Retrieve multiple policies in a single request with strategy-based version selection.
+- **Strategy-Based Retrieval**: Support for exact, latest_patch, latest_minor, and latest_major version strategies.
+- **Semantic Versioning**: Built-in support for semantic versioning with database-level optimization.
 - **Metadata Management**: Store and retrieve detailed policy metadata including descriptions, tags, and documentation links.
 
 ### Synchronization
@@ -32,6 +35,9 @@ The Policy Hub Backend provides a comprehensive API for managing API management 
 
 ### Performance and Scalability
 - **Database Pooling**: Configurable PostgreSQL connection pooling.
+- **Generated Columns**: PostgreSQL generated columns for semantic version parsing and optimization.
+- **Bulk Operations**: Optimized bulk database operations with parallel processing.
+- **Goroutine Coordination**: Efficient parallel processing with synchronized result collection.
 - **Caching Ready**: Architecture supports caching layers for improved performance.
 - **Concurrent Processing**: Handle multiple sync operations concurrently.
 

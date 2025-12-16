@@ -1,6 +1,16 @@
+/*
+ * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com). All Rights Reserved.
+ *
+ * This software is the property of WSO2 LLC. and its suppliers, if any.
+ * Dissemination of any information or reproduction of any material contained
+ * herein in any form is strictly forbidden, unless permitted by WSO2 expressly.
+ * You may not alter or remove any copyright or other notice from copies of this content.
+ */
+
 package handlers
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -233,26 +243,38 @@ func (h *PolicyHandler) GetPlatforms(c *gin.Context) {
 	middleware.SendSuccess(c, platforms)
 }
 
-// BatchGetPolicies handles POST /policies/batch
-func (h *PolicyHandler) BatchGetPolicies(c *gin.Context) {
-	var request dto.BatchPolicyRequestDTO
+// ResolvePolicies handles POST /policies/resolve
+func (h *PolicyHandler) ResolvePolicies(c *gin.Context) {
+	var request dto.ResolvePolicyRequestDTO
 	if err := c.ShouldBindJSON(&request); err != nil {
 		_ = c.Error(err)
 		return
 	}
 
+	// Validate batch size
+	batchSize := len(request.Policies)
+
+	// Enforce maximum batch size limit
+	if batchSize > policy.MaxBatchSize {
+		c.JSON(400, gin.H{
+			"error":    fmt.Sprintf("Batch size %d exceeds maximum limit of %d policies", batchSize, policy.MaxBatchSize),
+			"max_size": policy.MaxBatchSize,
+		})
+		return
+	}
+
 	// Convert DTOs to service types
-	serviceRequests := make([]policy.BatchPolicyRequest, 0, len(request.Policies))
+	serviceRequests := make([]policy.ResolvePolicyRequest, 0, len(request.Policies))
 	for _, req := range request.Policies {
-		serviceRequests = append(serviceRequests, policy.BatchPolicyRequest{
-			Name:      req.Name,
-			Version:   req.Version,
-			UseLatest: req.UseLatest,
+		serviceRequests = append(serviceRequests, policy.ResolvePolicyRequest{
+			Name:              req.Name,
+			RetrievalStrategy: req.RetrievalStrategy,
+			BaseVersion:       req.BaseVersion,
 		})
 	}
 
 	// Call service
-	results, errors := h.service.BatchGetPolicies(c.Request.Context(), serviceRequests)
+	results, errors := h.service.ResolvePolicies(c.Request.Context(), serviceRequests)
 
 	// Convert results to DTOs
 	responseData := make([]dto.PolicyWithDefinitionDTO, 0, len(results))

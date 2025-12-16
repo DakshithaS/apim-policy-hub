@@ -1,3 +1,12 @@
+/*
+ * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com). All Rights Reserved.
+ *
+ * This software is the property of WSO2 LLC. and its suppliers, if any.
+ * Dissemination of any information or reproduction of any material contained
+ * herein in any form is strictly forbidden, unless permitted by WSO2 expressly.
+ * You may not alter or remove any copyright or other notice from copies of this content.
+ */
+
 package policy
 
 import (
@@ -99,15 +108,15 @@ func CalculateTotalPages(totalItems, pageSize int) int {
 	return pages
 }
 
-// BatchPolicyRequest represents a single policy request in the batch
-type BatchPolicyRequest struct {
-	Name      string
-	Version   string
-	UseLatest bool
+// ResolvePolicyRequest represents a single policy request in the resolve operation
+type ResolvePolicyRequest struct {
+	Name              string
+	RetrievalStrategy string
+	BaseVersion       string
 }
 
-// PolicyBatchItem represents a policy item in batch response
-type PolicyBatchItem struct {
+// PolicyResolveItem represents a policy item in resolve response
+type PolicyResolveItem struct {
 	Name       string
 	Version    string
 	SourceType string
@@ -116,11 +125,28 @@ type PolicyBatchItem struct {
 	Metadata   *PolicyVersion
 }
 
-// PolicyBatchError represents an error for a specific policy in batch response
-type PolicyBatchError struct {
+// PolicyResolveError represents an error for a specific policy in resolve response
+type PolicyResolveError struct {
 	Name    string
 	Version string
 	Error   string
+}
+
+// Bulk request types for optimization
+type ExactVersionRequest struct {
+	Name    string
+	Version string
+}
+
+type PatchVersionRequest struct {
+	Name         string
+	MajorVersion int32
+	MinorVersion int32
+}
+
+type MinorVersionRequest struct {
+	Name         string
+	MajorVersion int32
 }
 
 // PolicyMetadata represents the metadata.json structure

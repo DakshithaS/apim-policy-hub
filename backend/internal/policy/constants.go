@@ -1,3 +1,12 @@
+/*
+ * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com). All Rights Reserved.
+ *
+ * This software is the property of WSO2 LLC. and its suppliers, if any.
+ * Dissemination of any information or reproduction of any material contained
+ * herein in any form is strictly forbidden, unless permitted by WSO2 expressly.
+ * You may not alter or remove any copyright or other notice from copies of this content.
+ */
+
 package policy
 
 import "time"
@@ -19,6 +28,11 @@ const (
 	MinPageSize     = 1
 )
 
+// Batch processing constants
+const (
+	MaxBatchSize = 100 // Maximum batch size limit
+)
+
 // Validation constants
 const (
 	MaxPolicyNameLength  = 100
@@ -34,7 +48,7 @@ const (
 // Regular expressions for validation
 const (
 	PolicyNameRegex = `^[a-zA-Z0-9_-]+$`
-	VersionRegex    = `^v\d+\.\d+\.\d+$`
+	VersionRegex    = `^\d+\.\d+\.\d+$`
 )
 
 // ValidDocTypes returns a map of valid documentation types
@@ -44,15 +58,5 @@ func ValidDocTypes() map[string]bool {
 		string(DocTypeConfiguration): true,
 		string(DocTypeExamples):      true,
 		string(DocTypeFAQ):           true,
-	}
-}
-
-// ValidDocTypeStrings returns a slice of valid documentation type strings
-func ValidDocTypeStrings() []string {
-	return []string{
-		string(DocTypeOverview),
-		string(DocTypeConfiguration),
-		string(DocTypeExamples),
-		string(DocTypeFAQ),
 	}
 }

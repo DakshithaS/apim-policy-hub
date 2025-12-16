@@ -1,8 +1,21 @@
+/*
+ * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com). All Rights Reserved.
+ *
+ * This software is the property of WSO2 LLC. and its suppliers, if any.
+ * Dissemination of any information or reproduction of any material contained
+ * herein in any form is strictly forbidden, unless permitted by WSO2 expressly.
+ * You may not alter or remove any copyright or other notice from copies of this content.
+ */
+
 package policy
 
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strconv"
+	"strings"
+	"sync"
 
 	"go.uber.org/zap"
 
@@ -54,15 +67,6 @@ func (s *Service) ListPolicies(ctx context.Context, filters PolicyFilters) ([]*P
 	}
 
 	return policies, pagination, nil
-}
-
-// GetPolicyByName retrieves the latest policy version by name (Policy alias for PolicyVersion)
-func (s *Service) GetPolicyByName(ctx context.Context, name string) (*PolicyVersion, error) {
-	policyVersion, err := s.repo.GetLatestPolicyVersion(ctx, name)
-	if err != nil {
-		return nil, errs.PolicyNotFound(name)
-	}
-	return policyVersion, nil
 }
 
 // GetPolicyWithLatestVersion retrieves the latest policy version (contains all policy data)
@@ -254,57 +258,168 @@ func (s *Service) GetDistinctPlatforms(ctx context.Context) ([]string, error) {
 	return platforms, nil
 }
 
-// BatchGetPolicies retrieves multiple policies in a single request
-func (s *Service) BatchGetPolicies(ctx context.Context, requests []BatchPolicyRequest) ([]PolicyBatchItem, []PolicyBatchError) {
-	var results []PolicyBatchItem
-	var errors []PolicyBatchError
+// ResolvePolicies retrieves multiple policies in a single request using bulk optimization
+func (s *Service) ResolvePolicies(ctx context.Context, requests []ResolvePolicyRequest) ([]PolicyResolveItem, []PolicyResolveError) {
+	// Group requests by strategy for bulk processing
+	strategyGroups := s.groupRequestsByStrategy(requests)
 
-	for _, req := range requests {
-		var policyVersion *PolicyVersion
-		var err error
+	// Process each strategy group in parallel
+	resultsChan := make(chan []PolicyResolveItem, 4)
+	errorsChan := make(chan []PolicyResolveError, 4)
 
-		// Determine which version to retrieve
-		if req.UseLatest || req.Version == "" {
-			policyVersion, err = s.GetLatestPolicyVersion(ctx, req.Name)
-		} else {
-			policyVersion, err = s.GetPolicyVersion(ctx, req.Name, req.Version)
-		}
+	var wg sync.WaitGroup
 
-		if err != nil {
-			errors = append(errors, PolicyBatchError{
-				Name:    req.Name,
-				Version: req.Version,
-				Error:   "Policy version not found",
-			})
-			continue
-		}
-
-		// Use the raw YAML definition for consistency with other endpoints
-		definition := map[string]interface{}{
-			"yaml": policyVersion.DefinitionYAML,
-		}
-
-		// Determine source type and URL
-		sourceType := "filesystem"
-		sourceURL := ""
-		if policyVersion.SourceType != nil {
-			sourceType = *policyVersion.SourceType
-		}
-		if policyVersion.SourceURL != nil {
-			sourceURL = *policyVersion.SourceURL
-		}
-
-		results = append(results, PolicyBatchItem{
-			Name:       policyVersion.PolicyName,
-			Version:    policyVersion.Version,
-			SourceType: sourceType,
-			SourceURL:  sourceURL,
-			Definition: definition,
-			Metadata:   policyVersion,
-		})
+	// Process exact versions
+	if len(strategyGroups["exact"]) > 0 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			results, errs := s.bulkGetExact(ctx, strategyGroups["exact"])
+			resultsChan <- results
+			errorsChan <- errs
+		}()
 	}
 
-	return results, errors
+	// Process latest patch versions
+	if len(strategyGroups["latest_patch"]) > 0 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			results, errs := s.bulkGetLatestPatch(ctx, strategyGroups["latest_patch"])
+			resultsChan <- results
+			errorsChan <- errs
+		}()
+	}
+
+	// Process latest minor versions
+	if len(strategyGroups["latest_minor"]) > 0 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			results, errs := s.bulkGetLatestMinor(ctx, strategyGroups["latest_minor"])
+			resultsChan <- results
+			errorsChan <- errs
+		}()
+	}
+
+	// Process latest major versions
+	if len(strategyGroups["latest_major"]) > 0 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			results, errs := s.bulkGetLatestMajor(ctx, strategyGroups["latest_major"])
+			resultsChan <- results
+			errorsChan <- errs
+		}()
+	}
+
+	// Close channels after all goroutines complete
+	go func() {
+		wg.Wait()
+		close(resultsChan)
+		close(errorsChan)
+	}()
+
+	// Collect results
+	var allResults []PolicyResolveItem
+	var allErrors []PolicyResolveError
+
+	for results := range resultsChan {
+		allResults = append(allResults, results...)
+	}
+
+	for errors := range errorsChan {
+		allErrors = append(allErrors, errors...)
+	}
+
+	return allResults, allErrors
+}
+
+// getPolicyByStrategy retrieves a policy version based on the specified strategy
+func (s *Service) getPolicyByStrategy(ctx context.Context, name, strategy, baseVersion string) (*PolicyVersion, error) {
+	switch strategy {
+	case "exact":
+		if baseVersion == "" {
+			return nil, errs.NewValidationError("baseVersion is required for exact strategy", map[string]any{
+				"policyName": name,
+				"strategy":   strategy,
+			})
+		}
+		return s.repo.GetPolicyVersionByExact(ctx, name, baseVersion)
+
+	case "latest_patch":
+		if baseVersion == "" {
+			return nil, errs.NewValidationError("baseVersion is required for latest_patch strategy", map[string]any{
+				"policyName": name,
+				"strategy":   strategy,
+			})
+		}
+		major, minor, err := s.parseMajorMinor(baseVersion)
+		if err != nil {
+			return nil, errs.NewValidationError("invalid baseVersion format for latest_patch", map[string]any{
+				"policyName":  name,
+				"baseVersion": baseVersion,
+				"error":       err.Error(),
+			})
+		}
+		return s.repo.GetPolicyVersionByLatestPatch(ctx, name, major, minor)
+
+	case "latest_minor":
+		if baseVersion == "" {
+			return nil, errs.NewValidationError("baseVersion is required for latest_minor strategy", map[string]any{
+				"policyName": name,
+				"strategy":   strategy,
+			})
+		}
+		major, err := s.parseMajor(baseVersion)
+		if err != nil {
+			return nil, errs.NewValidationError("invalid baseVersion format for latest_minor", map[string]any{
+				"policyName":  name,
+				"baseVersion": baseVersion,
+				"error":       err.Error(),
+			})
+		}
+		return s.repo.GetPolicyVersionByLatestMinor(ctx, name, major)
+
+	case "latest_major":
+		return s.repo.GetPolicyVersionByLatestMajor(ctx, name)
+
+	default:
+		return nil, errs.NewValidationError("invalid retrieval strategy", map[string]any{
+			"policyName": name,
+			"strategy":   strategy,
+		})
+	}
+}
+
+// parseMajorMinor parses a version string like "1.2" into major and minor integers
+func (s *Service) parseMajorMinor(version string) (int32, int32, error) {
+	parts := strings.Split(version, ".")
+	if len(parts) != 2 {
+		return 0, 0, fmt.Errorf("version must be in format 'major.minor', got: %s", version)
+	}
+
+	major, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return 0, 0, fmt.Errorf("invalid major version: %s", parts[0])
+	}
+
+	minor, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return 0, 0, fmt.Errorf("invalid minor version: %s", parts[1])
+	}
+
+	return int32(major), int32(minor), nil
+}
+
+// parseMajor parses a version string like "1" into major integer
+func (s *Service) parseMajor(version string) (int32, error) {
+	major, err := strconv.Atoi(version)
+	if err != nil {
+		return 0, fmt.Errorf("invalid major version: %s", version)
+	}
+
+	return int32(major), nil
 }
 
 // validateAssetURLs validates that asset URLs are properly formatted
@@ -325,4 +440,199 @@ func (s *Service) validateAssetURLs(version *PolicyVersion) error {
 	}
 
 	return nil
+}
+
+// groupRequestsByStrategy groups batch requests by their retrieval strategy
+func (s *Service) groupRequestsByStrategy(requests []ResolvePolicyRequest) map[string][]ResolvePolicyRequest {
+	groups := map[string][]ResolvePolicyRequest{
+		"exact":        {},
+		"latest_patch": {},
+		"latest_minor": {},
+		"latest_major": {},
+	}
+
+	for _, req := range requests {
+		if _, exists := groups[req.RetrievalStrategy]; exists {
+			groups[req.RetrievalStrategy] = append(groups[req.RetrievalStrategy], req)
+		}
+	}
+
+	return groups
+}
+
+// bulkGetExact processes exact version requests in bulk
+func (s *Service) bulkGetExact(ctx context.Context, requests []ResolvePolicyRequest) ([]PolicyResolveItem, []PolicyResolveError) {
+	// Convert to repository format
+	repoRequests := make([]ExactVersionRequest, 0, len(requests))
+	for _, req := range requests {
+		repoRequests = append(repoRequests, ExactVersionRequest{
+			Name:    req.Name,
+			Version: req.BaseVersion,
+		})
+	}
+
+	// Bulk fetch from database
+	policyVersions, err := s.repo.BulkGetPolicyVersionsByExact(ctx, repoRequests)
+	if err != nil {
+		// Convert to errors for all requests
+		errors := make([]PolicyResolveError, 0, len(requests))
+		for _, req := range requests {
+			errors = append(errors, PolicyResolveError{
+				Name:    req.Name,
+				Version: req.BaseVersion,
+				Error:   "Failed to fetch policy version",
+			})
+		}
+		return []PolicyResolveItem{}, errors
+	}
+
+	return s.convertToResolveItems(policyVersions), []PolicyResolveError{}
+}
+
+// bulkGetLatestPatch processes latest patch version requests in bulk
+func (s *Service) bulkGetLatestPatch(ctx context.Context, requests []ResolvePolicyRequest) ([]PolicyResolveItem, []PolicyResolveError) {
+	var validRequests []PatchVersionRequest
+	var errors []PolicyResolveError
+
+	// Parse base versions and validate
+	for _, req := range requests {
+		major, minor, err := s.parseMajorMinor(req.BaseVersion)
+		if err != nil {
+			errors = append(errors, PolicyResolveError{
+				Name:    req.Name,
+				Version: req.BaseVersion,
+				Error:   fmt.Sprintf("Invalid baseVersion format: %s", err.Error()),
+			})
+			continue
+		}
+
+		validRequests = append(validRequests, PatchVersionRequest{
+			Name:         req.Name,
+			MajorVersion: major,
+			MinorVersion: minor,
+		})
+	}
+
+	if len(validRequests) == 0 {
+		return []PolicyResolveItem{}, errors
+	}
+
+	// Bulk fetch from database
+	policyVersions, err := s.repo.BulkGetPolicyVersionsByLatestPatch(ctx, validRequests)
+	if err != nil {
+		// Add database errors for valid requests
+		for _, req := range validRequests {
+			errors = append(errors, PolicyResolveError{
+				Name:    req.Name,
+				Version: fmt.Sprintf("%d.%d", req.MajorVersion, req.MinorVersion),
+				Error:   "Failed to fetch latest patch version",
+			})
+		}
+		return []PolicyResolveItem{}, errors
+	}
+
+	return s.convertToResolveItems(policyVersions), errors
+}
+
+// bulkGetLatestMinor processes latest minor version requests in bulk
+func (s *Service) bulkGetLatestMinor(ctx context.Context, requests []ResolvePolicyRequest) ([]PolicyResolveItem, []PolicyResolveError) {
+	var validRequests []MinorVersionRequest
+	var errors []PolicyResolveError
+
+	// Parse base versions and validate
+	for _, req := range requests {
+		major, err := s.parseMajor(req.BaseVersion)
+		if err != nil {
+			errors = append(errors, PolicyResolveError{
+				Name:    req.Name,
+				Version: req.BaseVersion,
+				Error:   fmt.Sprintf("Invalid baseVersion format: %s", err.Error()),
+			})
+			continue
+		}
+
+		validRequests = append(validRequests, MinorVersionRequest{
+			Name:         req.Name,
+			MajorVersion: major,
+		})
+	}
+
+	if len(validRequests) == 0 {
+		return []PolicyResolveItem{}, errors
+	}
+
+	// Bulk fetch from database
+	policyVersions, err := s.repo.BulkGetPolicyVersionsByLatestMinor(ctx, validRequests)
+	if err != nil {
+		// Add database errors for valid requests
+		for _, req := range validRequests {
+			errors = append(errors, PolicyResolveError{
+				Name:    req.Name,
+				Version: fmt.Sprintf("%d", req.MajorVersion),
+				Error:   "Failed to fetch latest minor version",
+			})
+		}
+		return []PolicyResolveItem{}, errors
+	}
+
+	return s.convertToResolveItems(policyVersions), errors
+}
+
+// bulkGetLatestMajor processes latest major version requests in bulk
+func (s *Service) bulkGetLatestMajor(ctx context.Context, requests []ResolvePolicyRequest) ([]PolicyResolveItem, []PolicyResolveError) {
+	// Extract policy names
+	policyNames := make([]string, 0, len(requests))
+	for _, req := range requests {
+		policyNames = append(policyNames, req.Name)
+	}
+
+	// Bulk fetch from database
+	policyVersions, err := s.repo.BulkGetPolicyVersionsByLatestMajor(ctx, policyNames)
+	if err != nil {
+		// Convert to errors for all requests
+		errors := make([]PolicyResolveError, 0, len(requests))
+		for _, req := range requests {
+			errors = append(errors, PolicyResolveError{
+				Name:    req.Name,
+				Version: "",
+				Error:   "Failed to fetch latest major version",
+			})
+		}
+		return []PolicyResolveItem{}, errors
+	}
+
+	return s.convertToResolveItems(policyVersions), []PolicyResolveError{}
+}
+
+// convertToResolveItems converts PolicyVersion slice to PolicyResolveItem slice
+func (s *Service) convertToResolveItems(policyVersions []*PolicyVersion) []PolicyResolveItem {
+	items := make([]PolicyResolveItem, 0, len(policyVersions))
+
+	for _, pv := range policyVersions {
+		// Use the raw YAML definition for consistency with other endpoints
+		definition := map[string]interface{}{
+			"yaml": pv.DefinitionYAML,
+		}
+
+		// Determine source type and URL
+		sourceType := "filesystem"
+		sourceURL := ""
+		if pv.SourceType != nil {
+			sourceType = *pv.SourceType
+		}
+		if pv.SourceURL != nil {
+			sourceURL = *pv.SourceURL
+		}
+
+		items = append(items, PolicyResolveItem{
+			Name:       pv.PolicyName,
+			Version:    pv.Version,
+			SourceType: sourceType,
+			SourceURL:  sourceURL,
+			Definition: definition,
+			Metadata:   pv,
+		})
+	}
+
+	return items
 }
