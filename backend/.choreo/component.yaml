@@ -17,18 +17,18 @@
 # +required The configuration file schema version
 schemaVersion: 1.2
 
-# +optional Incoming connection details for the component
+# +required Incoming connection details for the component
 endpoints:
   # +required Unique name for the endpoint.
   # This name will be used when generating the managed API
-  - name: policy-hub
+  - name: policy-hub-public
     # +optional Display name for the endpoint.
-    displayName: Policy Hub API
+    displayName: Policy Hub Public API
     # +required Service section has the user service endpoint details
     service:
       # +optional Base path of the API that gets exposed via the endpoint.
       # This is mandatory if the endpoint type is set to REST or GraphQL.
-      basePath: /
+      basePath: /api/v1
       # +required Numeric port value that gets exposed via the endpoint
       port: 8080
     # +required Type of traffic that the endpoint is accepting.
@@ -42,4 +42,13 @@ endpoints:
     # Defaults to wildcard route if not specified.
     # This is only applicable to REST endpoint types.
     # The path should be relative to the docker context.
-    schemaFilePath: api/openapi.yaml
+    schemaFilePath: api/public-openapi.yaml
+  - name: policy-hub-internal
+    displayName: Policy Hub Internal API
+    service:
+      basePath: /api/v1/internal
+      port: 8080
+    type: REST
+    networkVisibilities:
+      - Organization
+    schemaFilePath: api/internal-openapi.yaml

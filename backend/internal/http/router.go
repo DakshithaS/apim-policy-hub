@@ -37,30 +37,35 @@ func SetupRouter(
 	policyHandler := handlers.NewPolicyHandler(policyService, logger)
 	syncHandler := handlers.NewSyncHandler(syncService, logger)
 
-	// Public routes
-	router.GET("/health", healthHandler.HealthCheck)
+	// API Version group
+	apiV1 := router.Group("/api/v1")
+
+	// Public routes under /api/v1
+	apiV1.GET("/health", healthHandler.HealthCheck)
 
 	// Policy routes
-	router.GET("/policies", validationMW.ValidatePagination(), policyHandler.ListPolicies)
-	router.POST("/policies/batch", policyHandler.BatchGetPolicies)
+	apiV1.GET("/policies", validationMW.ValidatePagination(), policyHandler.ListPolicies)
+	apiV1.POST("/policies/batch", policyHandler.BatchGetPolicies)
 
 	// Metadata routes (must come before parameterized routes)
-	router.GET("/policies/categories", policyHandler.GetCategories)
-	router.GET("/policies/providers", policyHandler.GetProviders)
-	router.GET("/policies/platforms", policyHandler.GetPlatforms)
+	apiV1.GET("/policies/categories", policyHandler.GetCategories)
+	apiV1.GET("/policies/providers", policyHandler.GetProviders)
+	apiV1.GET("/policies/platforms", policyHandler.GetPlatforms)
 
 	// Parameterized policy routes
-	router.GET("/policies/:name", validationMW.ValidatePolicyName(), policyHandler.GetPolicySummary)
-	router.GET("/policies/:name/versions", validationMW.ValidatePolicyName(), validationMW.ValidatePagination(), policyHandler.ListPolicyVersions)
-	router.GET("/policies/:name/versions/latest", validationMW.ValidatePolicyName(), policyHandler.GetLatestVersion)
-	router.GET("/policies/:name/versions/:version", validationMW.ValidatePolicyName(), validationMW.ValidateVersion(), policyHandler.GetPolicyVersionDetail)
-	router.GET("/policies/:name/versions/:version/definition", validationMW.ValidatePolicyName(), validationMW.ValidateVersion(), policyHandler.GetPolicyDefinition)
-	router.GET("/policies/:name/versions/:version/engine", validationMW.ValidatePolicyName(), validationMW.ValidateVersion(), policyHandler.GetPolicyForEngine)
-	router.GET("/policies/:name/versions/:version/docs", validationMW.ValidatePolicyName(), validationMW.ValidateVersion(), policyHandler.GetAllDocs)
-	router.GET("/policies/:name/versions/:version/docs/:page", validationMW.ValidatePolicyName(), validationMW.ValidateVersion(), validationMW.ValidateDocType(), policyHandler.GetSingleDoc)
+	apiV1.GET("/policies/:name", validationMW.ValidatePolicyName(), policyHandler.GetPolicySummary)
+	apiV1.GET("/policies/:name/versions", validationMW.ValidatePolicyName(), validationMW.ValidatePagination(), policyHandler.ListPolicyVersions)
+	apiV1.GET("/policies/:name/versions/latest", validationMW.ValidatePolicyName(), policyHandler.GetLatestVersion)
+	apiV1.GET("/policies/:name/versions/:version", validationMW.ValidatePolicyName(), validationMW.ValidateVersion(), policyHandler.GetPolicyVersionDetail)
+	apiV1.GET("/policies/:name/versions/:version/definition", validationMW.ValidatePolicyName(), validationMW.ValidateVersion(), policyHandler.GetPolicyDefinition)
+	apiV1.GET("/policies/:name/versions/:version/engine", validationMW.ValidatePolicyName(), validationMW.ValidateVersion(), policyHandler.GetPolicyForEngine)
+	apiV1.GET("/policies/:name/versions/:version/docs", validationMW.ValidatePolicyName(), validationMW.ValidateVersion(), policyHandler.GetAllDocs)
+	apiV1.GET("/policies/:name/versions/:version/docs/:page", validationMW.ValidatePolicyName(), validationMW.ValidateVersion(), validationMW.ValidateDocType(), policyHandler.GetSingleDoc)
 
-	// Sync endpoint
-	router.POST("/sync", syncHandler.Sync)
+	// Internal routes under /api/v1/internal
+	internal := apiV1.Group("/internal")
+	internal.GET("/health", healthHandler.HealthCheck)
+	internal.POST("/sync", syncHandler.Sync)
 
 	return router
 }
