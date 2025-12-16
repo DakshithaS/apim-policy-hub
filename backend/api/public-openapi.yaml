@@ -1024,7 +1024,7 @@ components:
           example:
             yaml: "name: rate-limiting\nversion: 1.1.0\ndescription: Rate limiting policy\n..."
         metadata:
-          $ref: '#/components/schemas/PolicyVersion'
+          $ref: '#/components/schemas/PolicyMetadata'
       required:
         - name
         - version

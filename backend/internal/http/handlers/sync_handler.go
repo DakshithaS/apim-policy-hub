@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 
+	"github.com/wso2/policyhub/internal/errs"
 	"github.com/wso2/policyhub/internal/http/dto"
 	"github.com/wso2/policyhub/internal/http/middleware"
 	"github.com/wso2/policyhub/internal/logging"
@@ -25,13 +26,37 @@ func NewSyncHandler(syncService *sync.Service, logger *logging.Logger) *SyncHand
 	}
 }
 
-// Sync handles POST /sync
-func (h *SyncHandler) Sync(c *gin.Context) {
+// CreatePolicyVersion handles POST /policies/{name}/versions/{version}
+func (h *SyncHandler) CreatePolicyVersion(c *gin.Context) {
+	policyName := c.Param("name")
+	version := c.Param("version")
+
 	var req dto.SyncRequestDTO
 	if err := c.ShouldBindJSON(&req); err != nil {
 		_ = c.Error(err)
 		return
 	}
+
+	// Validate that URL params match request body
+	if req.PolicyName != "" && req.PolicyName != policyName {
+		_ = c.Error(errs.NewValidationError("policy name in URL does not match request body", map[string]any{
+			"url_name":  policyName,
+			"body_name": req.PolicyName,
+		}))
+		return
+	}
+
+	if req.Version != "" && req.Version != version {
+		_ = c.Error(errs.NewValidationError("version in URL does not match request body", map[string]any{
+			"url_version":  version,
+			"body_version": req.Version,
+		}))
+		return
+	}
+
+	// Use URL params as authoritative source
+	req.PolicyName = policyName
+	req.Version = version
 
 	// Validate version format (must be d.d.d)
 	if err := validation.ValidateVersion(req.Version); err != nil {

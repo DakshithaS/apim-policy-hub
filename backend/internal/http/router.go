@@ -65,7 +65,7 @@ func SetupRouter(
 	// Internal routes under /api/v1/internal
 	internal := apiV1.Group("/internal")
 	internal.GET("/health", healthHandler.HealthCheck)
-	internal.POST("/sync", syncHandler.Sync)
+	internal.POST("/policies/:name/versions/:version", validationMW.ValidatePolicyName(), validationMW.ValidateVersion(), syncHandler.CreatePolicyVersion)
 
 	return router
 }

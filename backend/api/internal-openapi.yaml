@@ -34,12 +34,25 @@ paths:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
 
-  /sync:
+  /policies/{name}/versions/{version}:
     post:
       tags:
         - sync
-      summary: Sync policy from external source
-      operationId: syncPolicy
+      summary: Create policy version from external source
+      operationId: createPolicyVersion
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Policy name
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          description: Policy version
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -238,8 +251,6 @@ components:
           format: uri
           example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/assets/
       required:
-        - policyName
-        - version
         - sourceType
         - sourceUrl
         - definitionUrl
