@@ -35,6 +35,7 @@ type PolicyVersion struct {
 	IconPath           pgtype.Text        `json:"icon_path"`
 	SourceType         pgtype.Text        `json:"source_type"`
 	DownloadUrl        pgtype.Text        `json:"download_url"`
+	Checksum           []byte             `json:"checksum"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 	MajorVersion       pgtype.Int4        `json:"major_version"`

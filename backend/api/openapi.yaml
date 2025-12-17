@@ -33,6 +33,8 @@ tags:
     description: Documentation operations
   - name: sync
     description: Internal sync operations
+  - name: health
+    description: Health check operations
 
 paths:
   /policies:
@@ -44,37 +46,45 @@ paths:
       parameters:
         - name: search
           in: query
-          description: Free text search over name, description, tags
+          description: Free text search across policy name, description, and tags
+          required: false
           schema:
             type: string
+            maxLength: 255
         - name: category
           in: query
-          description: Filter by category (comma-separated for multiple)
+          description: Filter by category (comma-separated for multiple categories)
+          required: false
           schema:
             type: string
         - name: categories
           in: query
-          description: Filter by categories (comma-separated, alternative to category)
+          description: Filter by categories (comma-separated, alternative to category parameter)
+          required: false
           schema:
             type: string
         - name: provider
           in: query
-          description: Filter by provider (comma-separated for multiple)
+          description: Filter by provider (comma-separated for multiple providers)
+          required: false
           schema:
             type: string
         - name: providers
           in: query
-          description: Filter by providers (comma-separated, alternative to provider)
+          description: Filter by providers (comma-separated, alternative to provider parameter)
+          required: false
           schema:
             type: string
         - name: platform
           in: query
-          description: Filter by supported platform (comma-separated for multiple)
+          description: Filter by supported platform (comma-separated for multiple platforms)
+          required: false
           schema:
             type: string
         - name: platforms
           in: query
-          description: Filter by supported platforms (comma-separated, alternative to platform)
+          description: Filter by supported platforms (comma-separated, alternative to platform parameter)
+          required: false
           schema:
             type: string
         - name: page
@@ -99,6 +109,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PoliciesListResponse'
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /policies/resolve:
     post:
@@ -115,16 +137,53 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ResolvePolicyRequest'
+              type: array
+              items:
+                $ref: '#/components/schemas/PolicyRequestItem'
+              minItems: 1
+              maxItems: 100
+            example:
+              - name: rate-limiting
+                version: "1.1.0"
+                versionResolution: exact
+              - name: jwt-authentication
+                version: "2.1"
+                versionResolution: patch
+              - name: cors-policy
+                version: "1"
+                versionResolution: minor
       responses:
         '200':
           description: Resolve policy retrieval response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PoliciesWithDefinitionsResponse'
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PolicyResolveItem'
+                  error:
+                    nullable: true
+                    example: null
+                  meta:
+                    $ref: '#/components/schemas/ResponseMeta'
+                required:
+                  - success
+                  - data
+                  - meta
         '400':
-          description: Invalid request payload
+          description: Invalid request payload or batch size exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -143,6 +202,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CategoriesResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /policies/providers:
     get:
@@ -157,6 +222,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProvidersResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /policies/platforms:
     get:
@@ -171,6 +242,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PlatformsResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /policies/{name}:
     get:
@@ -194,6 +271,12 @@ paths:
                 $ref: '#/components/schemas/PolicyResponse'
         '404':
           description: Policy not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -232,6 +315,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PolicyVersionsResponse'
+        '404':
+          description: Policy not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /policies/{name}/versions/latest:
     get:
@@ -256,6 +351,12 @@ paths:
                 $ref: '#/components/schemas/PolicyResponse'
         '404':
           description: Policy not found or has no versions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -293,6 +394,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /policies/{name}/versions/{version}/definition:
     get:
@@ -321,40 +428,20 @@ paths:
               schema:
                 type: string
                 description: Raw policy definition in YAML format
-
-  /policies/{name}/versions/{version}/engine:
-    get:
-      tags:
-        - versions
-      summary: Get policy data for policy engine
-      description: Returns policy metadata and definition optimized for policy engine consumption
-      operationId: getPolicyForEngine
-      parameters:
-        - name: name
-          in: path
-          required: true
-          description: Policy name
-          schema:
-            type: string
-        - name: version
-          in: path
-          required: true
-          description: Policy version
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Policy data for engine
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PolicyWithDefinitionResponse'
         '404':
           description: Policy version not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+
 
   /policies/{name}/versions/{version}/docs:
     get:
@@ -382,6 +469,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DocumentationListResponse'
+        '404':
+          description: Policy version not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /policies/{name}/versions/{version}/docs/{page}:
     get:
@@ -417,17 +516,39 @@ paths:
               schema:
                 $ref: '#/components/schemas/DocumentationResponse'
         '404':
-          description: Documentation page not found
+          description: Documentation page not found or policy version not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /policies/{name}/versions/{version}/sync:
+  /internal/health:
+    get:
+      tags:
+        - health
+      summary: Health check endpoint
+      description: Returns the health status of the service
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /internal/policies/{name}/versions/{version}:
     post:
       tags:
         - sync
       summary: Create policy version from external source
+      description: Internal endpoint to create/sync a policy version from external sources. Maps to CreatePolicyVersion handler.
       operationId: createPolicyVersion
       parameters:
         - name: name
@@ -456,13 +577,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/SyncStatusResponse'
         '400':
-          description: Validation error
+          description: Validation error or invalid request payload
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '409':
-          description: Version already exists (immutable)
+          description: Version already exists (policy versions are immutable)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -470,36 +597,6 @@ paths:
 
 components:
   schemas:
-    BaseResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-        data:
-          nullable: true
-        error:
-          $ref: '#/components/schemas/ErrorObject'
-        meta:
-          $ref: '#/components/schemas/ResponseMeta'
-      required:
-        - success
-        - meta
-
-    PaginatedResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-        data:
-          nullable: true
-        error:
-          $ref: '#/components/schemas/ErrorObject'
-        meta:
-          $ref: '#/components/schemas/PaginatedResponseMeta'
-      required:
-        - success
-        - meta
-
     ResponseMeta:
       type: object
       properties:
@@ -515,6 +612,7 @@ components:
       required:
         - trace_id
         - timestamp
+        - request_id
 
     PaginatedResponseMeta:
       type: object
@@ -533,6 +631,7 @@ components:
       required:
         - trace_id
         - timestamp
+        - request_id
         - pagination
 
     ErrorObject:
@@ -541,7 +640,7 @@ components:
         code:
           type: string
           description: Machine-readable error code
-          example: POLICY_NOT_FOUND
+          example: POLICY_VERSION_NOT_FOUND
         message:
           type: string
           description: Human-readable error message
@@ -569,6 +668,8 @@ components:
           $ref: '#/components/schemas/ResponseMeta'
       required:
         - success
+        - data
+        - error
         - meta
 
     PoliciesListResponse:
@@ -588,25 +689,7 @@ components:
           $ref: '#/components/schemas/PaginatedResponseMeta'
       required:
         - success
-        - meta
-
-    PoliciesWithDefinitionsResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/PolicyWithDefinition'
-        error:
-          nullable: true
-          example: null
-        meta:
-          $ref: '#/components/schemas/ResponseMeta'
-      required:
-        - success
+        - data
         - meta
 
     CategoriesResponse:
@@ -627,6 +710,7 @@ components:
           $ref: '#/components/schemas/ResponseMeta'
       required:
         - success
+        - data
         - meta
 
     ProvidersResponse:
@@ -647,6 +731,7 @@ components:
           $ref: '#/components/schemas/ResponseMeta'
       required:
         - success
+        - data
         - meta
 
     PlatformsResponse:
@@ -667,6 +752,7 @@ components:
           $ref: '#/components/schemas/ResponseMeta'
       required:
         - success
+        - data
         - meta
 
     PolicyResponse:
@@ -684,6 +770,7 @@ components:
           $ref: '#/components/schemas/ResponseMeta'
       required:
         - success
+        - data
         - meta
 
     PolicyVersionsResponse:
@@ -703,6 +790,7 @@ components:
           $ref: '#/components/schemas/PaginatedResponseMeta'
       required:
         - success
+        - data
         - meta
 
     DocumentationListResponse:
@@ -713,6 +801,7 @@ components:
           example: true
         data:
           type: array
+          description: Array of documentation pages (DocsAllResponseDTO)
           items:
             $ref: '#/components/schemas/PolicyDocumentation'
         error:
@@ -722,6 +811,7 @@ components:
           $ref: '#/components/schemas/ResponseMeta'
       required:
         - success
+        - data
         - meta
 
     DocumentationResponse:
@@ -739,6 +829,7 @@ components:
           $ref: '#/components/schemas/ResponseMeta'
       required:
         - success
+        - data
         - meta
 
     SyncStatusResponse:
@@ -756,16 +847,27 @@ components:
           $ref: '#/components/schemas/ResponseMeta'
       required:
         - success
+        - data
         - meta
 
-    PolicyWithDefinitionResponse:
+    HealthResponse:
       type: object
       properties:
         success:
           type: boolean
           example: true
         data:
-          $ref: '#/components/schemas/PolicyWithDefinition'
+          type: object
+          properties:
+            status:
+              type: string
+              example: ok
+            timestamp:
+              type: string
+              format: date-time
+          required:
+            - status
+            - timestamp
         error:
           nullable: true
           example: null
@@ -773,6 +875,7 @@ components:
           $ref: '#/components/schemas/ResponseMeta'
       required:
         - success
+        - data
         - meta
 
     PaginationMeta:
@@ -843,6 +946,7 @@ components:
           type: string
           format: date
           example: "2025-02-15"
+          nullable: true
         isLatest:
           type: boolean
           example: true
@@ -853,84 +957,34 @@ components:
           type: string
           format: uri
           example: https://github.com/wso2/policies/rate-limit
+
       required:
         - name
         - version
         - displayName
         - provider
+        - categories  
+        - tags
+        - supportedPlatforms
         - isLatest
 
-    PolicyWithDefinition:
-      type: object
-      description: Streamlined policy object for engine/resolve operations including definition
-      properties:
-        name:
-          type: string
-          example: rate-limit
-        version:
-          type: string
-          example: v1.1.0
-        displayName:
-          type: string
-          example: Rate Limiting Policy
-        provider:
-          type: string
-          example: WSO2
-        categories:
-          type: array
-          items:
-            type: string
-          example: ["security", "traffic-control"]
-        releaseDate:
-          type: string
-          format: date
-          example: "2025-02-15"
-        isLatest:
-          type: boolean
-          example: true
-        sourceType:
-          type: string
-          example: github
-        downloadUrl:
-          type: string
-          format: uri
-          example: https://github.com/wso2/policies/rate-limit
-        definition:
-          type: string
-          description: Raw policy definition in YAML format
-          example: |
-            policyName: rate-limit
-            version: "1.1.0"
-            schema:
-              type: object
-              properties:
-                requestsPerMinute:
-                  type: integer
-                  minimum: 1
-      required:
-        - name
-        - version
-        - displayName
-        - provider
-        - categories
-        - isLatest
-        - definition
+
 
     PolicyMetadata:
       type: object
       properties:
-        name:
-          type: string
-          example: rate-limit
         displayName:
           type: string
           example: Rate Limiting Policy
+          maxLength: 100
         provider:
           type: string
           example: WSO2
+          maxLength: 100
         description:
           type: string
           example: Rate limit traffic per minute
+          maxLength: 1000
         categories:
           type: array
           items:
@@ -955,31 +1009,8 @@ components:
           format: uri
           example: https://raw.githubusercontent.com/wso2/policies/rate-limit/v1.1.0/banner.png
       required:
-        - name
         - displayName
         - provider
-
-    DocsAllResponse:
-      type: array
-      items:
-        $ref: '#/components/schemas/DocsSingleResponse'
-
-    DocsSingleResponse:
-      type: object
-      properties:
-        page:
-          type: string
-          enum: [overview, configuration, examples, faq]
-        format:
-          type: string
-          enum: [markdown]
-          example: markdown
-        content:
-          type: string
-      required:
-        - page
-        - format
-        - content
 
     PolicySyncRequest:
       type: object
@@ -987,9 +1018,14 @@ components:
         policyName:
           type: string
           example: rate-limit
+          pattern: '^[a-zA-Z0-9_-]{3,64}$'
+          minLength: 3
+          maxLength: 64
         version:
           type: string
           example: v1.1.0
+          pattern: '^\d+\.\d+\.\d+$'
+          maxLength: 50
         sourceType:
           type: string
           enum: [github]
@@ -1004,77 +1040,30 @@ components:
           description: URL to raw policy definition file (YAML format only)
           example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/policy-definition.yml
         metadata:
-          allOf:
-            - $ref: '#/components/schemas/PolicyMetadata'
-          description: Policy metadata
+          $ref: '#/components/schemas/PolicyMetadata'
         documentation:
           type: object
           description: Mapping of doc types to absolute URLs of markdown documentation files
-          properties:
-            overview:
-              type: string
-              example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/overview.md
-            configuration:
-              type: string
-              example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/configuration.md
-            examples:
-              type: string
-              example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/examples.md
-            faq:
-              type: string
-              example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/faq.md
-          required: []  # Optional per type
+          additionalProperties:
+            type: string
+          example:
+            overview: "https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/overview.md"
+            configuration: "https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/configuration.md"
+            examples: "https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/examples.md"
+            faq: "https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/faq.md"
         assetsBaseUrl:
           type: string
           format: uri
           example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/assets/
+        checksum:
+          $ref: '#/components/schemas/Checksum'
       required:
+        - policyName
+        - version
         - sourceType
         - downloadUrl
         - definitionUrl
         - metadata
-
-    SyncResponse:
-      type: object
-      properties:
-        policyName:
-          type: string
-          example: rate-limit
-        version:
-          type: string
-          example: v1.1.0
-        status:
-          type: string
-          enum: [synced]
-          example: synced
-      required:
-        - policyName
-        - version
-        - status
-
-    ResolvePolicyRequest:
-      type: object
-      properties:
-        policies:
-          type: array
-          items:
-            $ref: '#/components/schemas/PolicyRequestItem'
-          minItems: 1
-          maxItems: 100
-          example:
-            - name: rate-limiting
-              retrievalStrategy: exact
-              baseVersion: "1.1.0"
-            - name: jwt-authentication
-              retrievalStrategy: latest_patch
-              baseVersion: "2.1"
-            - name: cors-policy
-              retrievalStrategy: latest_minor
-              baseVersion: "1"
-            - name: api-throttling
-              retrievalStrategy: latest_major
-      required:
-        - policies
 
     PolicyRequestItem:
       type: object
@@ -1082,78 +1071,61 @@ components:
         name:
           type: string
           example: rate-limiting
-        retrievalStrategy:
-          type: string
-          enum: [exact, latest_patch, latest_minor, latest_major]
-          example: exact
-          description: |
-            Strategy for version retrieval:
-            - exact: Get the exact version specified in baseVersion
-            - latest_patch: Get latest patch version within major.minor from baseVersion
-            - latest_minor: Get latest minor version within major from baseVersion  
-            - latest_major: Get latest major version (no baseVersion needed)
-        baseVersion:
+          pattern: '^[a-zA-Z0-9_-]{3,64}$'
+          minLength: 3
+          maxLength: 64
+        version:
           type: string
           example: "1.1.0"
+          description: "Version string - can include 'v' prefix (e.g., 'v1.1.0' or '1.1.0'). Handler normalizes by removing 'v' prefix."
+          maxLength: 50
+        versionResolution:
+          type: string
+          enum: [exact, patch, minor]
+          example: exact
           description: |
-            Base version for strategy-based retrieval. Required for exact, latest_patch, latest_minor.
-            Format depends on strategy:
-            - exact: "1.2.3" (full semantic version)
-            - latest_patch: "1.2" (major.minor)
-            - latest_minor: "1" (major only)
-            - latest_major: not used
+            Strategy for version retrieval (validated in handler):
+            - exact: Get the exact version specified in version field
+            - patch: Get latest patch version within major.minor from version
+            - minor: Get latest minor version within major from version
+            Note: 'major' resolution is NOT supported in current handler validation
+          default: exact
       required:
         - name
-        - retrievalStrategy
+        - version
 
     PolicyResolveItem:
       type: object
       properties:
-        name:
+        policy_name:
           type: string
           example: rate-limiting
         version:
           type: string
           example: "1.1.0"
-        sourceType:
-          type: string
-          example: github
-        downloadUrl:
+        download_url:
           type: string
           example: "https://github.com/wso2/policy-hub/tree/main/storage/rate-limiting/1.1.0"
-        definition:
+        checksum:
           type: object
+          description: Checksum information (always present, may have empty values if source has no checksum)
           properties:
-            yaml:
+            algorithm:
               type: string
-              description: Raw YAML policy definition
-          example:
-            yaml: "name: rate-limiting\nversion: 1.1.0\ndescription: Rate limiting policy\n..."
-        metadata:
-          $ref: '#/components/schemas/PolicyMetadata'
+              example: SHA-256
+              description: Checksum algorithm (empty string if no checksum available)
+            value:
+              type: string
+              example: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+              description: Checksum value (empty string if no checksum available)
+          required:
+            - algorithm
+            - value
       required:
-        - name
+        - policy_name
         - version
-        - sourceType
-        - downloadUrl
-        - definition
-        - metadata
-
-    PolicyError:
-      type: object
-      properties:
-        name:
-          type: string
-          example: non-existent-policy
-        version:
-          type: string
-          example: "1.0.0"
-        error:
-          type: string
-          example: Policy not found
-      required:
-        - name
-        - error
+        - download_url
+        - checksum
 
     PolicyDocumentation:
       type: object
@@ -1189,3 +1161,17 @@ components:
         - policyName
         - version
         - status
+
+    Checksum:
+      type: object
+      description: Checksum information for policy verification
+      properties:
+        algorithm:
+          type: string
+          example: SHA-256
+        value:
+          type: string
+          example: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      required:
+        - algorithm
+        - value

@@ -84,11 +84,12 @@ type SyncRequestDTO struct {
 	PolicyName    string            `json:"policyName" binding:"required"`
 	Version       string            `json:"version" binding:"required"`
 	SourceType    string            `json:"sourceType" binding:"required"`
-	SourceURL     string            `json:"downloadUrl" binding:"required"`
+	DownloadURL   string            `json:"downloadUrl" binding:"required"`
 	DefinitionURL string            `json:"definitionUrl" binding:"required"`
 	Metadata      PolicyMetadataDTO `json:"metadata" binding:"required"`
 	Documentation map[string]string `json:"documentation"`
 	AssetsBaseURL string            `json:"assetsBaseUrl"`
+	Checksum      *ChecksumDTO      `json:"checksum"`
 }
 
 // SyncResponseDTO represents the sync response payload
@@ -105,65 +106,46 @@ type HealthResponseDTO struct {
 }
 
 // ResolvePolicyRequestDTO represents a resolve policy retrieval request
-type ResolvePolicyRequestDTO struct {
-	Policies []PolicyRequestItemDTO `json:"policies" binding:"required,min=1"`
-}
+type ResolvePolicyRequestDTO []ResolvePolicyItemDTO
 
-// PolicyRequestItemDTO represents a single policy request in the batch
-type PolicyRequestItemDTO struct {
+// ResolvePolicyItemDTO represents a single policy request in the batch
+type ResolvePolicyItemDTO struct {
 	Name              string `json:"name" binding:"required"`
-	RetrievalStrategy string `json:"retrievalStrategy" binding:"required"` // "exact", "latest_patch", "latest_minor", "latest_major"
-	BaseVersion       string `json:"baseVersion,omitempty"`                // For "exact", "latest_patch", "latest_minor"; ignored for "latest_major"
+	Version           string `json:"version" binding:"required"`
+	VersionResolution string `json:"versionResolution,omitempty"`
 }
 
-// PolicyResolveItemDTO represents a policy item in the resolve response
-type PolicyResolveItemDTO struct {
-	Name       string                 `json:"name"`
-	Version    string                 `json:"version"`
-	SourceType string                 `json:"sourceType"`
-	SourceURL  string                 `json:"downloadUrl"`
-	Definition map[string]interface{} `json:"definition"`
-	Metadata   PolicyMetadataDTO      `json:"metadata"`
+// ChecksumDTO represents a checksum with algorithm and value
+type ChecksumDTO struct {
+	Algorithm string `json:"algorithm"`
+	Value     string `json:"value"`
 }
 
-// PolicyErrorDTO represents an error for a specific policy in batch response
-type PolicyErrorDTO struct {
-	Name    string `json:"name"`
-	Version string `json:"version,omitempty"`
-	Error   string `json:"error"`
+// ResolvePolicyVersion represents a resolved policy version
+type ResolvePolicyVersion struct {
+	PolicyName  string      `json:"policy_name"`
+	Version     string      `json:"version"`
+	DownloadUrl string      `json:"download_url"`
+	Checksum    ChecksumDTO `json:"checksum"`
 }
 
 // PolicyDTO represents the standardized policy object
 // Used across all GET endpoints for consistent response structure
 type PolicyDTO struct {
-	Name               string   `json:"name"`
-	Version            string   `json:"version"`
-	DisplayName        string   `json:"displayName"`
-	Description        string   `json:"description,omitempty"`
-	Provider           string   `json:"provider"`
-	Categories         []string `json:"categories"`
-	Tags               []string `json:"tags"`
-	SupportedPlatforms []string `json:"supportedPlatforms"`
-	LogoURL            string   `json:"logoUrl,omitempty"`
-	BannerURL          string   `json:"bannerUrl,omitempty"`
-	IconURL            string   `json:"iconUrl,omitempty"`
-	ReleaseDate        *string  `json:"releaseDate,omitempty"`
-	IsLatest           bool     `json:"isLatest"`
-	SourceType         string   `json:"sourceType,omitempty"`
-	SourceURL          string   `json:"downloadUrl,omitempty"`
-}
-
-// PolicyWithDefinitionDTO represents a streamlined policy object for engine/batch operations
-// Includes definition but excludes unnecessary metadata fields
-type PolicyWithDefinitionDTO struct {
-	Name        string   `json:"name"`
-	Version     string   `json:"version"`
-	DisplayName string   `json:"displayName"`
-	Provider    string   `json:"provider"`
-	Categories  []string `json:"categories"`
-	ReleaseDate *string  `json:"releaseDate,omitempty"`
-	IsLatest    bool     `json:"isLatest"`
-	SourceType  string   `json:"sourceType,omitempty"`
-	SourceURL   string   `json:"downloadUrl,omitempty"`
-	Definition  string   `json:"definition"`
+	Name               string       `json:"name"`
+	Version            string       `json:"version"`
+	DisplayName        string       `json:"displayName"`
+	Description        string       `json:"description,omitempty"`
+	Provider           string       `json:"provider"`
+	Categories         []string     `json:"categories"`
+	Tags               []string     `json:"tags"`
+	SupportedPlatforms []string     `json:"supportedPlatforms"`
+	LogoURL            string       `json:"logoUrl,omitempty"`
+	BannerURL          string       `json:"bannerUrl,omitempty"`
+	IconURL            string       `json:"iconUrl,omitempty"`
+	ReleaseDate        *string      `json:"releaseDate,omitempty"`
+	IsLatest           bool         `json:"isLatest"`
+	SourceType         string       `json:"sourceType,omitempty"`
+	DownloadURL        string       `json:"downloadUrl,omitempty"`
+	Checksum           *ChecksumDTO `json:"checksum,omitempty"`
 }

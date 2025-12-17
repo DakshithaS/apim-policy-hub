@@ -29,17 +29,11 @@ type Repository interface {
 	GetLatestPolicyVersion(ctx context.Context, name string) (*PolicyVersion, error)
 	CreatePolicyVersion(ctx context.Context, version *PolicyVersion) (*PolicyVersion, error)
 
-	// Strategy-based policy retrieval
-	GetPolicyVersionByExact(ctx context.Context, name, version string) (*PolicyVersion, error)
-	GetPolicyVersionByLatestPatch(ctx context.Context, name string, majorVersion, minorVersion int32) (*PolicyVersion, error)
-	GetPolicyVersionByLatestMinor(ctx context.Context, name string, majorVersion int32) (*PolicyVersion, error)
-	GetPolicyVersionByLatestMajor(ctx context.Context, name string) (*PolicyVersion, error)
-
 	// Bulk strategy-based policy retrieval
-	BulkGetPolicyVersionsByExact(ctx context.Context, requests []ExactVersionRequest) ([]*PolicyVersion, error)
-	BulkGetPolicyVersionsByLatestPatch(ctx context.Context, requests []PatchVersionRequest) ([]*PolicyVersion, error)
-	BulkGetPolicyVersionsByLatestMinor(ctx context.Context, requests []MinorVersionRequest) ([]*PolicyVersion, error)
-	BulkGetPolicyVersionsByLatestMajor(ctx context.Context, policyNames []string) ([]*PolicyVersion, error)
+	BulkGetPolicyVersionsByExact(ctx context.Context, requests []ExactVersionRequest) ([]ResolvePolicyVersion, error)
+	BulkGetPolicyVersionsByLatestPatch(ctx context.Context, requests []PatchVersionRequest) ([]ResolvePolicyVersion, error)
+	BulkGetPolicyVersionsByLatestMinor(ctx context.Context, requests []MinorVersionRequest) ([]ResolvePolicyVersion, error)
+	BulkGetPolicyVersionsByLatestMajor(ctx context.Context, policyNames []string) ([]ResolvePolicyVersion, error)
 
 	// Documentation operations
 	GetPolicyDoc(ctx context.Context, versionID int32, page string) (*PolicyDoc, error)

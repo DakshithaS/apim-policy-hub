@@ -46,6 +46,7 @@ func CreateSchema(pool *pgxpool.Pool, logger *zap.Logger) error {
 		icon_path VARCHAR(500),
 		source_type VARCHAR(50),
 		download_url VARCHAR(1000),
+		checksum JSONB,
 		
 		created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 		updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

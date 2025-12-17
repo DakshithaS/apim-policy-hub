@@ -56,7 +56,7 @@ func (r *SyncRequest) Validate() *errs.AppError {
 	if r.SourceType == "" {
 		return errs.NewValidationError("source type is required", nil)
 	}
-	if r.SourceURL == "" {
+	if r.DownloadURL == "" {
 		return errs.NewValidationError("source URL is required", nil)
 	}
 	if r.DefinitionURL == "" {
@@ -77,7 +77,7 @@ func (r *SyncRequest) Validate() *errs.AppError {
 	}
 
 	// Validate URLs
-	if err := validation.ValidateURL(r.SourceURL); err != nil {
+	if err := validation.ValidateURL(r.DownloadURL); err != nil {
 		return errs.NewValidationError("invalid source URL", map[string]any{"error": err.Message})
 	}
 	if err := validation.ValidateURL(r.DefinitionURL); err != nil {
@@ -111,7 +111,7 @@ func (s *Service) SyncPolicy(ctx context.Context, req *SyncRequest) (*SyncResult
 	s.logger.Info("Policy synchronization started",
 		zap.String("policy", req.PolicyName),
 		zap.String("version", req.Version),
-		zap.String("download_url", req.SourceURL),
+		zap.String("download_url", req.DownloadURL),
 		zap.Int("docs_count", len(req.Documentation)),
 		zap.Bool("has_assets", req.AssetsBaseURL != ""))
 
@@ -230,8 +230,11 @@ func (s *Service) createPolicyVersion(
 	if req.SourceType != "" {
 		policyVersion.SourceType = &req.SourceType
 	}
-	if req.SourceURL != "" {
-		policyVersion.SourceURL = &req.SourceURL
+	if req.DownloadURL != "" {
+		policyVersion.DownloadURL = &req.DownloadURL
+	}
+	if req.Checksum != nil {
+		policyVersion.Checksum = req.Checksum
 	}
 
 	desc := metadata.Description

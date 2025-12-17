@@ -1,12 +1,3 @@
-/*
- * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com). All Rights Reserved.
- *
- * This software is the property of WSO2 LLC. and its suppliers, if any.
- * Dissemination of any information or reproduction of any material contained
- * herein in any form is strictly forbidden, unless permitted by WSO2 expressly.
- * You may not alter or remove any copyright or other notice from copies of this content.
- */
-
 -- All PolicyVersion queries - single table architecture
 
 -- =============================================================================
@@ -54,7 +45,7 @@ WITH ranked_versions AS (
 SELECT 
     id, policy_name, version, is_latest, display_name, provider, description, 
     categories, tags, logo_path, banner_path, supported_platforms, 
-    release_date, definition_yaml, icon_path, source_type, download_url, 
+    release_date, definition_yaml, icon_path, source_type, download_url, checksum,
     created_at, updated_at
 FROM ranked_versions 
 WHERE version_rank = 1
@@ -121,46 +112,86 @@ INSERT INTO policy_version (
     icon_path,
     source_type,
     download_url,
+    checksum,
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW()
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, NOW(), NOW()
 )
 RETURNING *;
 
 -- =============================================================================
--- STRATEGY-BASED POLICY RETRIEVAL
+-- BULK POLICY RESOLUTION QUERIES
 -- =============================================================================
 
--- name: GetPolicyVersionByExact :one
-SELECT * FROM policy_version
-WHERE policy_name = $1 AND version = $2;
+-- name: ResolvePoliciesExact :many
+SELECT 
+    policy_name,
+    version,
+    download_url,
+    checksum
+FROM policy_version
+WHERE (policy_name, version) IN (
+    SELECT unnest($1::text[]), unnest($2::text[])
+);
 
--- name: GetPolicyVersionByLatestPatch :one
-SELECT * FROM policy_version
-WHERE policy_name = $1 
-  AND major_version = $2 
-  AND minor_version = $3
-ORDER BY patch_version DESC
-LIMIT 1;
+-- name: ResolvePoliciesPatch :many
+WITH input_policies AS (
+    SELECT 
+        unnest($1::text[]) as policy_name,
+        unnest($2::text[]) as base_version
+),
+parsed_versions AS (
+    SELECT 
+        policy_name,
+        base_version,
+        split_part(base_version, '.', 1)::INT as major,
+        split_part(base_version, '.', 2)::INT as minor
+    FROM input_policies
+)
+SELECT DISTINCT ON (pv.policy_name)
+    pv.policy_name,
+    pv.version,
+    pv.download_url,
+    pv.checksum
+FROM parsed_versions ip
+JOIN policy_version pv ON pv.policy_name = ip.policy_name
+WHERE pv.major_version = ip.major 
+  AND pv.minor_version = ip.minor
+  AND pv.version ~ '^\d+\.\d+\.\d+$'
+ORDER BY pv.policy_name, pv.major_version DESC, pv.minor_version DESC, pv.patch_version DESC;
 
--- name: GetPolicyVersionByLatestMinor :one
-SELECT * FROM policy_version
-WHERE policy_name = $1 
-  AND major_version = $2
-ORDER BY minor_version DESC, patch_version DESC
-LIMIT 1;
+-- name: ResolvePoliciesMinor :many
+WITH input_policies AS (
+    SELECT 
+        unnest($1::text[]) as policy_name,
+        unnest($2::text[]) as base_version
+),
+parsed_versions AS (
+    SELECT 
+        policy_name,
+        base_version,
+        split_part(base_version, '.', 1)::INT as major
+    FROM input_policies
+)
+SELECT DISTINCT ON (pv.policy_name)
+    pv.policy_name,
+    pv.version,
+    pv.download_url,
+    pv.checksum
+FROM parsed_versions ip
+JOIN policy_version pv ON pv.policy_name = ip.policy_name
+WHERE pv.major_version = ip.major
+  AND pv.version ~ '^\d+\.\d+\.\d+$'
+ORDER BY pv.policy_name, pv.major_version DESC, pv.minor_version DESC, pv.patch_version DESC;
 
--- name: GetPolicyVersionByLatestMajor :one
-SELECT * FROM policy_version
-WHERE policy_name = $1
-ORDER BY major_version DESC, minor_version DESC, patch_version DESC
-LIMIT 1;
-
--- =============================================================================
--- BULK STRATEGY-BASED POLICY RETRIEVAL
--- =============================================================================
-
--- name: BulkGetPolicyVersionsByNames :many
-SELECT * FROM policy_version
-WHERE policy_name = ANY($1::text[]);
+-- name: ResolvePoliciesMajor :many
+SELECT DISTINCT ON (pv.policy_name)
+    pv.policy_name,
+    pv.version,
+    pv.download_url,
+    pv.checksum
+FROM policy_version pv
+WHERE pv.policy_name = ANY($1::text[])
+  AND pv.version ~ '^\d+\.\d+\.\d+$'
+ORDER BY pv.policy_name, pv.major_version DESC, pv.minor_version DESC, pv.patch_version DESC;

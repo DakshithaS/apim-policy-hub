@@ -15,13 +15,31 @@ import (
 	"time"
 )
 
+// Checksum represents a checksum with algorithm and value
+type Checksum struct {
+	Algorithm string `json:"algorithm"`
+	Value     string `json:"value"`
+}
+
+// Scan implements the sql.Scanner interface for database retrieval
+func (c *Checksum) Scan(value interface{}) error {
+	if value == nil {
+		return nil
+	}
+	bytes, ok := value.([]byte)
+	if !ok {
+		return json.Unmarshal([]byte(value.(string)), c)
+	}
+	return json.Unmarshal(bytes, c)
+}
+
 type PolicyVersion struct {
 	ID         int32
 	PolicyName string
 	Version    string
 	IsLatest   bool
 
-	// All metadata fields (can vary per version)
+	// Policy fields (metadata and version-specific data)
 	DisplayName        string
 	Provider           string
 	Description        *string
@@ -36,7 +54,8 @@ type PolicyVersion struct {
 	DefinitionYAML string
 	IconPath       *string
 	SourceType     *string
-	SourceURL      *string
+	DownloadURL    *string
+	Checksum       *Checksum
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }
@@ -108,28 +127,27 @@ func CalculateTotalPages(totalItems, pageSize int) int {
 	return pages
 }
 
-// ResolvePolicyRequest represents a single policy request in the resolve operation
-type ResolvePolicyRequest struct {
+// PolicyResolveRequest represents a policy resolution request
+type PolicyResolveRequest struct {
 	Name              string
-	RetrievalStrategy string
-	BaseVersion       string
+	Version           string
+	VersionResolution string
 }
 
 // PolicyResolveItem represents a policy item in resolve response
 type PolicyResolveItem struct {
-	Name       string
-	Version    string
-	SourceType string
-	SourceURL  string
-	Definition map[string]interface{}
-	Metadata   *PolicyVersion
+	Name        string
+	Version     string
+	DownloadURL string
+	Checksum    *Checksum
 }
 
-// PolicyResolveError represents an error for a specific policy in resolve response
-type PolicyResolveError struct {
-	Name    string
-	Version string
-	Error   string
+// ResolvePolicyVersion represents a resolved policy version from database
+type ResolvePolicyVersion struct {
+	PolicyName  string    `json:"policy_name"`
+	Version     string    `json:"version"`
+	DownloadUrl string    `json:"download_url"`
+	Checksum    *Checksum `json:"checksum"`
 }
 
 // Bulk request types for optimization

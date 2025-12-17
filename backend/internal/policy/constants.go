@@ -47,8 +47,16 @@ const (
 
 // Regular expressions for validation
 const (
-	PolicyNameRegex = `^[a-zA-Z0-9_-]+$`
+	PolicyNameRegex = `^[a-zA-Z0-9_-]{3,64}$`
 	VersionRegex    = `^\d+\.\d+\.\d+$`
+)
+
+// Version resolution types
+const (
+	VersionResolutionExact = "exact"
+	VersionResolutionPatch = "patch"
+	VersionResolutionMinor = "minor"
+	VersionResolutionMajor = "major"
 )
 
 // ValidDocTypes returns a map of valid documentation types
