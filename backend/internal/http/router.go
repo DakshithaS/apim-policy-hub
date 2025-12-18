@@ -65,7 +65,6 @@ func SetupRouter(
 	apiV1.GET("/policies/:name/versions/latest", validationMW.ValidatePolicyName(), policyHandler.GetLatestVersion)
 	apiV1.GET("/policies/:name/versions/:version", validationMW.ValidatePolicyName(), validationMW.ValidateVersion(), policyHandler.GetPolicyVersionDetail)
 	apiV1.GET("/policies/:name/versions/:version/definition", validationMW.ValidatePolicyName(), validationMW.ValidateVersion(), policyHandler.GetPolicyDefinition)
-	apiV1.GET("/policies/:name/versions/:version/engine", validationMW.ValidatePolicyName(), validationMW.ValidateVersion(), policyHandler.GetPolicyForEngine)
 	apiV1.GET("/policies/:name/versions/:version/docs", validationMW.ValidatePolicyName(), validationMW.ValidateVersion(), policyHandler.GetAllDocs)
 	apiV1.GET("/policies/:name/versions/:version/docs/:page", validationMW.ValidatePolicyName(), validationMW.ValidateVersion(), validationMW.ValidateDocType(), policyHandler.GetSingleDoc)
 

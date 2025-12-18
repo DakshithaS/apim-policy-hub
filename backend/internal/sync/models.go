@@ -16,11 +16,12 @@ type SyncRequest struct {
 	PolicyName    string
 	Version       string
 	SourceType    string
-	SourceURL     string
+	DownloadURL   string
 	DefinitionURL string
 	Metadata      *policy.PolicyMetadata
 	Documentation map[string]string
 	AssetsBaseURL string
+	Checksum      *policy.Checksum
 }
 
 // SyncResult represents the result of a sync operation

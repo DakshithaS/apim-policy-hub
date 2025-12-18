@@ -96,7 +96,7 @@ func (h *SyncHandler) CreatePolicyVersion(c *gin.Context) {
 		PolicyName:    req.PolicyName,
 		Version:       req.Version,
 		SourceType:    req.SourceType,
-		SourceURL:     req.SourceURL,
+		DownloadURL:   req.DownloadURL,
 		DefinitionURL: req.DefinitionURL,
 		Metadata: &policy.PolicyMetadata{
 			DisplayName:        req.Metadata.DisplayName,
@@ -110,6 +110,7 @@ func (h *SyncHandler) CreatePolicyVersion(c *gin.Context) {
 		},
 		Documentation: req.Documentation,
 		AssetsBaseURL: req.AssetsBaseURL,
+		Checksum:      convertChecksumDTO(req.Checksum),
 	}
 
 	// Execute sync
@@ -126,4 +127,15 @@ func (h *SyncHandler) CreatePolicyVersion(c *gin.Context) {
 	}
 
 	middleware.SendSuccess(c, response)
+}
+
+// convertChecksumDTO converts *dto.ChecksumDTO to *policy.Checksum
+func convertChecksumDTO(checksumDTO *dto.ChecksumDTO) *policy.Checksum {
+	if checksumDTO == nil {
+		return nil
+	}
+	return &policy.Checksum{
+		Algorithm: checksumDTO.Algorithm,
+		Value:     checksumDTO.Value,
+	}
 }

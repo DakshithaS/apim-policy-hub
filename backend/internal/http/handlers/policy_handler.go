@@ -15,8 +15,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 
+	"github.com/wso2/policyhub/internal/errs"
 	"github.com/wso2/policyhub/internal/http/dto"
 	"github.com/wso2/policyhub/internal/http/middleware"
 	"github.com/wso2/policyhub/internal/logging"
@@ -158,22 +158,6 @@ func (h *PolicyHandler) GetPolicyDefinition(c *gin.Context) {
 	c.Data(200, "text/yaml", definition)
 }
 
-// GetPolicyForEngine handles GET /policies/{name}/versions/{version}/engine
-func (h *PolicyHandler) GetPolicyForEngine(c *gin.Context) {
-	name := c.Param("name")
-	version := c.Param("version")
-
-	// Get policy version (contains all needed data)
-	policyVersion, err := h.service.GetPolicyVersion(c.Request.Context(), name, version)
-	if err != nil {
-		_ = c.Error(err)
-		return
-	}
-
-	response := toPolicyWithDefinitionDTO(policyVersion)
-	middleware.SendSuccess(c, response)
-}
-
 // GetAllDocs handles GET /policies/{name}/versions/{version}/docs
 func (h *PolicyHandler) GetAllDocs(c *gin.Context) {
 	name := c.Param("name")
@@ -245,84 +229,78 @@ func (h *PolicyHandler) GetPlatforms(c *gin.Context) {
 
 // ResolvePolicies handles POST /policies/resolve
 func (h *PolicyHandler) ResolvePolicies(c *gin.Context) {
-	var request dto.ResolvePolicyRequestDTO
-	if err := c.ShouldBindJSON(&request); err != nil {
+	var req dto.ResolvePolicyRequestDTO
+	if err := c.ShouldBindJSON(&req); err != nil {
 		_ = c.Error(err)
 		return
 	}
 
-	// Validate batch size
-	batchSize := len(request.Policies)
-
-	// Enforce maximum batch size limit
-	if batchSize > policy.MaxBatchSize {
-		c.JSON(400, gin.H{
-			"error":    fmt.Sprintf("Batch size %d exceeds maximum limit of %d policies", batchSize, policy.MaxBatchSize),
-			"max_size": policy.MaxBatchSize,
-		})
+	// Check batch size limit
+	if len(req) > policy.MaxBatchSize {
+		_ = c.Error(errs.NewValidationError(
+			fmt.Sprintf("too many policies in batch (max %d)", policy.MaxBatchSize),
+			map[string]any{
+				"maxBatchSize": policy.MaxBatchSize,
+				"provided":     len(req),
+			},
+		))
 		return
 	}
 
-	// Convert DTOs to service types
-	serviceRequests := make([]policy.ResolvePolicyRequest, 0, len(request.Policies))
-	for _, req := range request.Policies {
-		serviceRequests = append(serviceRequests, policy.ResolvePolicyRequest{
-			Name:              req.Name,
-			RetrievalStrategy: req.RetrievalStrategy,
-			BaseVersion:       req.BaseVersion,
+	// Validate and normalize requests
+	requests := make([]*policy.PolicyResolveRequest, 0, len(req))
+	for _, item := range req {
+		// Normalize version (remove 'v' prefix if present)
+		normalizedVersion := strings.TrimPrefix(item.Version, "v")
+
+		// Default versionResolution to "exact" if not provided
+		versionResolution := item.VersionResolution
+		if versionResolution == "" {
+			versionResolution = policy.VersionResolutionExact
+		}
+
+		// Validate versionResolution
+		if versionResolution != policy.VersionResolutionExact && versionResolution != policy.VersionResolutionPatch && versionResolution != policy.VersionResolutionMinor {
+			_ = c.Error(errs.NewValidationError("invalid versionResolution", map[string]any{
+				"allowed_values": []string{policy.VersionResolutionExact, policy.VersionResolutionPatch, policy.VersionResolutionMinor},
+				"provided":       versionResolution,
+			}))
+			return
+		}
+
+		requests = append(requests, &policy.PolicyResolveRequest{
+			Name:              item.Name,
+			Version:           normalizedVersion,
+			VersionResolution: versionResolution,
 		})
 	}
 
-	// Call service
-	results, errors := h.service.ResolvePolicies(c.Request.Context(), serviceRequests)
+	// Resolve policies
+	resolved, err := h.service.ResolvePolicyVersions(c.Request.Context(), requests)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
 
-	// Convert results to DTOs
-	responseData := make([]dto.PolicyWithDefinitionDTO, 0, len(results))
-	for _, result := range results {
-		// Extract the YAML definition from the batch result
-		yamlStr, ok := result.Definition["yaml"].(string)
-		if !ok {
-			h.logger.Error("Invalid definition format in batch result",
-				zap.String("name", result.Name),
-				zap.String("version", result.Version))
-			yamlStr = "{}"
+	// Convert to response DTO
+	response := make([]dto.ResolvePolicyVersion, 0, len(resolved))
+	for _, item := range resolved {
+		var checksumDTO dto.ChecksumDTO
+		if item.Checksum != nil {
+			checksumDTO = dto.ChecksumDTO{
+				Algorithm: item.Checksum.Algorithm,
+				Value:     item.Checksum.Value,
+			}
 		}
-
-		var releaseDate *string
-		if result.Metadata.ReleaseDate != nil {
-			dateStr := result.Metadata.ReleaseDate.Format("2006-01-02")
-			releaseDate = &dateStr
-		}
-
-		sourceType := ""
-		if result.Metadata.SourceType != nil {
-			sourceType = *result.Metadata.SourceType
-		}
-
-		sourceURL := ""
-		if result.Metadata.SourceURL != nil {
-			sourceURL = *result.Metadata.SourceURL
-		}
-
-		responseData = append(responseData, dto.PolicyWithDefinitionDTO{
-			Name:        result.Name,
-			Version:     result.Version,
-			DisplayName: result.Metadata.DisplayName,
-			Provider:    result.Metadata.Provider,
-			Categories:  result.Metadata.Categories,
-			ReleaseDate: releaseDate,
-			IsLatest:    result.Metadata.IsLatest,
-			SourceType:  sourceType,
-			SourceURL:   sourceURL,
-			Definition:  yamlStr,
+		response = append(response, dto.ResolvePolicyVersion{
+			PolicyName:  item.Name,
+			Version:     item.Version,
+			DownloadUrl: item.DownloadURL,
+			Checksum:    checksumDTO,
 		})
 	}
 
-	// For now, we'll ignore errors in the batch response as per the streamlined approach
-	// In the future, we might want to include error handling if needed
-	_ = errors
-
-	middleware.SendSuccess(c, responseData)
+	middleware.SendSuccess(c, response)
 }
 
 // Helper functions
@@ -372,9 +350,17 @@ func toPolicyDTO(v *policy.PolicyVersion) dto.PolicyDTO {
 		sourceType = *v.SourceType
 	}
 
-	sourceURL := ""
-	if v.SourceURL != nil {
-		sourceURL = *v.SourceURL
+	DownloadURL := ""
+	if v.DownloadURL != nil {
+		DownloadURL = *v.DownloadURL
+	}
+
+	var checksumDTO *dto.ChecksumDTO
+	if v.Checksum != nil {
+		checksumDTO = &dto.ChecksumDTO{
+			Algorithm: v.Checksum.Algorithm,
+			Value:     v.Checksum.Value,
+		}
 	}
 
 	return dto.PolicyDTO{
@@ -392,38 +378,8 @@ func toPolicyDTO(v *policy.PolicyVersion) dto.PolicyDTO {
 		ReleaseDate:        releaseDate,
 		IsLatest:           v.IsLatest,
 		SourceType:         sourceType,
-		SourceURL:          sourceURL,
-	}
-}
-
-func toPolicyWithDefinitionDTO(v *policy.PolicyVersion) dto.PolicyWithDefinitionDTO {
-	sourceType := ""
-	if v.SourceType != nil {
-		sourceType = *v.SourceType
-	}
-
-	sourceURL := ""
-	if v.SourceURL != nil {
-		sourceURL = *v.SourceURL
-	}
-
-	var releaseDate *string
-	if v.ReleaseDate != nil {
-		dateStr := v.ReleaseDate.Format("2006-01-02")
-		releaseDate = &dateStr
-	}
-
-	return dto.PolicyWithDefinitionDTO{
-		Name:        v.PolicyName,
-		Version:     v.Version,
-		DisplayName: v.DisplayName,
-		Provider:    v.Provider,
-		Categories:  v.Categories,
-		ReleaseDate: releaseDate,
-		IsLatest:    v.IsLatest,
-		SourceType:  sourceType,
-		SourceURL:   sourceURL,
-		Definition:  v.DefinitionYAML,
+		DownloadURL:        DownloadURL,
+		Checksum:           checksumDTO,
 	}
 }
 

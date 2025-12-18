@@ -65,7 +65,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SyncRequest'
+              $ref: '#/components/schemas/PolicySyncRequest'
       responses:
         '200':
           description: Policy synced successfully
@@ -88,21 +88,6 @@ paths:
 
 components:
   schemas:
-    BaseResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-        data:
-          nullable: true
-        error:
-          $ref: '#/components/schemas/ErrorObject'
-        meta:
-          $ref: '#/components/schemas/ResponseMeta'
-      required:
-        - success
-        - meta
-
     ErrorResponse:
       type: object
       properties:
@@ -118,6 +103,8 @@ components:
           $ref: '#/components/schemas/ResponseMeta'
       required:
         - success
+        - data
+        - error
         - meta
 
     HealthResponse:
@@ -132,6 +119,12 @@ components:
             status:
               type: string
               example: ok
+            timestamp:
+              type: string
+              format: date-time
+          required:
+            - status
+            - timestamp
         error:
           nullable: true
           example: null
@@ -139,6 +132,7 @@ components:
           $ref: '#/components/schemas/ResponseMeta'
       required:
         - success
+        - data
         - meta
 
     ErrorObject:
@@ -160,28 +154,35 @@ components:
     ResponseMeta:
       type: object
       properties:
+        trace_id:
+          type: string
+          example: "abc123"
         timestamp:
           type: string
           format: date-time
-          example: '2024-01-01T00:00:00Z'
+        request_id:
+          type: string
+          example: "xyz123"
       required:
+        - trace_id
         - timestamp
+        - request_id
 
     PolicyMetadata:
       type: object
       properties:
-        name:
-          type: string
-          example: rate-limit
         displayName:
           type: string
           example: Rate Limiting Policy
+          maxLength: 100
         provider:
           type: string
           example: WSO2
+          maxLength: 100
         description:
           type: string
           example: Rate limit traffic per minute
+          maxLength: 1000
         categories:
           type: array
           items:
@@ -200,25 +201,29 @@ components:
         logoUrl:
           type: string
           format: uri
-          example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/icon.svg
+          example: https://raw.githubusercontent.com/wso2/policies/rate-limit/v1.1.0/icon.svg
         bannerUrl:
           type: string
           format: uri
-          example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/banner.png
+          example: https://raw.githubusercontent.com/wso2/policies/rate-limit/v1.1.0/banner.png
       required:
-        - name
         - displayName
         - provider
 
-    SyncRequest:
+    PolicySyncRequest:
       type: object
       properties:
         policyName:
           type: string
           example: rate-limit
+          pattern: '^[a-zA-Z0-9_-]{3,64}$'
+          minLength: 3
+          maxLength: 64
         version:
           type: string
-          example: "1.1.0"
+          example: v1.1.0
+          pattern: '^\d+\.\d+\.\d+$'
+          maxLength: 50
         sourceType:
           type: string
           enum: [github]
@@ -233,34 +238,30 @@ components:
           description: URL to raw policy definition file (YAML format only)
           example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/policy-definition.yml
         metadata:
-          allOf:
-            - $ref: '#/components/schemas/PolicyMetadata'
-          description: Policy metadata
+          $ref: '#/components/schemas/PolicyMetadata'
         documentation:
           type: object
           description: Mapping of doc types to absolute URLs of markdown documentation files
-          properties:
-            overview:
-              type: string
-              example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/overview.md
-            configuration:
-              type: string
-              example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/configuration.md
-            examples:
-              type: string
-              example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/examples.md
-            faq:
-              type: string
-              example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/faq.md
-          required: []  # Optional per type
+          additionalProperties:
+            type: string
+          example:
+            overview: "https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/overview.md"
+            configuration: "https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/configuration.md"
+            examples: "https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/examples.md"
+            faq: "https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/docs/faq.md"
         assetsBaseUrl:
           type: string
           format: uri
           example: https://raw.githubusercontent.com/wso2/policies/rate-limiting/1.1.0/assets/
+        checksum:
+          $ref: '#/components/schemas/Checksum'
       required:
+        - policyName
+        - version
         - sourceType
         - downloadUrl
         - definitionUrl
+        - metadata
 
     SyncStatusResponse:
       type: object
@@ -287,7 +288,7 @@ components:
           example: rate-limit
         version:
           type: string
-          example: "1.1.0"
+          example: v1.1.0
         status:
           type: string
           enum: [synced]
@@ -296,3 +297,17 @@ components:
         - policyName
         - version
         - status
+
+    Checksum:
+      type: object
+      description: Checksum information for policy verification
+      properties:
+        algorithm:
+          type: string
+          example: SHA-256
+        value:
+          type: string
+          example: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      required:
+        - algorithm
+        - value

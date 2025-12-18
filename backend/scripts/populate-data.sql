@@ -23,7 +23,7 @@ ALTER SEQUENCE policy_docs_id_seq RESTART WITH 1;
 INSERT INTO policy_version (
     policy_name, version, is_latest, display_name, provider, description, 
     categories, tags, logo_path, banner_path, supported_platforms,
-    release_date, definition_yaml, source_type, download_url
+    release_date, definition_yaml, source_type, download_url, checksum
 ) VALUES
 -- Rate Limiting Policy Versions
 ('rate-limiting', '1.0.0', false, 'Rate Limiting Policy', 'WSO2', 'Controls the number of requests per time window to prevent API abuse and ensure fair usage', '["security", "traffic-control"]', '["rate-limit", "throttling", "quota"]', 'rate-limiting/1.0.0/assets/icon.svg', 'rate-limiting/1.0.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-01-15',
@@ -50,9 +50,9 @@ configuration:
       default: "ip"
 enforcement:
   type: "request"
-  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/rate-limiting/1.0.0'),
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/rate-limiting/1.0.0', '{"algorithm": "sha256", "value": "dummy-checksum-rate-limiting-1.0.0"}'),
 
-('rate-limiting', '1.1.0', true, 'Rate Limiting Policy', 'WSO2', 'Controls the number of requests per time window with enhanced burst capacity', '["security", "traffic-control"]', '["rate-limit", "throttling", "quota", "burst"]', 'rate-limiting/1.1.0/assets/icon.svg', 'rate-limiting/1.1.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-03-20',
+('rate-limiting', '1.1.0', false, 'Rate Limiting Policy', 'WSO2', 'Controls the number of requests per time window with enhanced burst capacity', '["security", "traffic-control"]', '["rate-limit", "throttling", "quota", "burst"]', 'rate-limiting/1.1.0/assets/icon.svg', 'rate-limiting/1.1.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-03-20',
 'name: rate-limiting
 version: 1.1.0
 description: Enhanced rate limiting with burst capacity
@@ -81,7 +81,236 @@ configuration:
       default: "ip"
 enforcement:
   type: "request"
-  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/rate-limiting/1.1.0'),
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/rate-limiting/1.1.0', '{"algorithm": "sha256", "value": "dummy-checksum-rate-limiting-1.1.0"}'),
+
+('rate-limiting', '1.2.0', false, 'Rate Limiting Policy', 'WSO2', 'Rate limiting with improved performance and additional key types', '["security", "traffic-control"]', '["rate-limit", "throttling", "quota", "performance"]', 'rate-limiting/1.2.0/assets/icon.svg', 'rate-limiting/1.2.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-05-10',
+'name: rate-limiting
+version: 1.2.0
+description: Rate limiting with performance improvements
+configuration:
+  properties:
+    requestCount:
+      type: integer
+      description: Maximum requests per time window
+      default: 100
+      minimum: 1
+      maximum: 10000
+    timeUnit:
+      type: string
+      description: Time unit for the window
+      enum: ["second", "minute", "hour", "day"]
+      default: "minute"
+    burstCapacity:
+      type: integer
+      description: Burst capacity above normal limit
+      default: 20
+      minimum: 0
+    keyType:
+      type: string
+      description: Key type for rate limiting
+      enum: ["ip", "user", "api", "application", "custom"]
+      default: "ip"
+    customKeyExpression:
+      type: string
+      description: Custom key expression
+      default: ""
+enforcement:
+  type: "request"
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/rate-limiting/1.2.0', '{"algorithm": "sha256", "value": "dummy-checksum-rate-limiting-1.2.0"}'),
+
+('rate-limiting', '1.3.0', false, 'Rate Limiting Policy', 'WSO2', 'Rate limiting with distributed caching support', '["security", "traffic-control"]', '["rate-limit", "throttling", "quota", "distributed"]', 'rate-limiting/1.3.0/assets/icon.svg', 'rate-limiting/1.3.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-07-15',
+'name: rate-limiting
+version: 1.3.0
+description: Rate limiting with distributed caching
+configuration:
+  properties:
+    requestCount:
+      type: integer
+      description: Maximum requests per time window
+      default: 100
+      minimum: 1
+      maximum: 10000
+    timeUnit:
+      type: string
+      description: Time unit for the window
+      enum: ["second", "minute", "hour", "day"]
+      default: "minute"
+    burstCapacity:
+      type: integer
+      description: Burst capacity above normal limit
+      default: 20
+      minimum: 0
+    keyType:
+      type: string
+      description: Key type for rate limiting
+      enum: ["ip", "user", "api", "application", "custom"]
+      default: "ip"
+    customKeyExpression:
+      type: string
+      description: Custom key expression
+      default: ""
+    distributedCache:
+      type: boolean
+      description: Enable distributed caching
+      default: false
+enforcement:
+  type: "request"
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/rate-limiting/1.3.0', '{"algorithm": "sha256", "value": "dummy-checksum-rate-limiting-1.3.0"}'),
+
+('rate-limiting', '2.0.0', false, 'Rate Limiting Policy', 'WSO2', 'Major update with advanced algorithms and analytics', '["security", "traffic-control"]', '["rate-limit", "throttling", "quota", "analytics"]', 'rate-limiting/2.0.0/assets/icon.svg', 'rate-limiting/2.0.0/assets/banner.png', '["apim-4.5+"]', '2024-10-01',
+'name: rate-limiting
+version: 2.0.0
+description: Advanced rate limiting with analytics
+configuration:
+  properties:
+    requestCount:
+      type: integer
+      description: Maximum requests per time window
+      default: 100
+      minimum: 1
+      maximum: 10000
+    timeUnit:
+      type: string
+      description: Time unit for the window
+      enum: ["second", "minute", "hour", "day"]
+      default: "minute"
+    burstCapacity:
+      type: integer
+      description: Burst capacity above normal limit
+      default: 20
+      minimum: 0
+    keyType:
+      type: string
+      description: Key type for rate limiting
+      enum: ["ip", "user", "api", "application", "custom"]
+      default: "ip"
+    customKeyExpression:
+      type: string
+      description: Custom key expression
+      default: ""
+    distributedCache:
+      type: boolean
+      description: Enable distributed caching
+      default: false
+    analytics:
+      type: boolean
+      description: Enable rate limiting analytics
+      default: true
+enforcement:
+  type: "request"
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/rate-limiting/2.0.0', '{"algorithm": "sha256", "value": "dummy-checksum-rate-limiting-2.0.0"}'),
+
+('rate-limiting', '2.1.0', false, 'Rate Limiting Policy', 'WSO2', 'Enhanced analytics and reporting features', '["security", "traffic-control"]', '["rate-limit", "throttling", "quota", "analytics", "reporting"]', 'rate-limiting/2.1.0/assets/icon.svg', 'rate-limiting/2.1.0/assets/banner.png', '["apim-4.5+"]', '2024-12-15',
+'name: rate-limiting
+version: 2.1.0
+description: Rate limiting with enhanced analytics
+configuration:
+  properties:
+    requestCount:
+      type: integer
+      description: Maximum requests per time window
+      default: 100
+      minimum: 1
+      maximum: 10000
+    timeUnit:
+      type: string
+      description: Time unit for the window
+      enum: ["second", "minute", "hour", "day"]
+      default: "minute"
+    burstCapacity:
+      type: integer
+      description: Burst capacity above normal limit
+      default: 20
+      minimum: 0
+    keyType:
+      type: string
+      description: Key type for rate limiting
+      enum: ["ip", "user", "api", "application", "custom"]
+      default: "ip"
+    customKeyExpression:
+      type: string
+      description: Custom key expression
+      default: ""
+    distributedCache:
+      type: boolean
+      description: Enable distributed caching
+      default: false
+    analytics:
+      type: boolean
+      description: Enable rate limiting analytics
+      default: true
+    reporting:
+      type: object
+      description: Reporting configuration
+      properties:
+        enabled:
+          type: boolean
+          default: false
+        interval:
+          type: string
+          enum: ["hourly", "daily", "weekly"]
+          default: "daily"
+enforcement:
+  type: "request"
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/rate-limiting/2.1.0', '{"algorithm": "sha256", "value": "dummy-checksum-rate-limiting-2.1.0"}'),
+
+('rate-limiting', '3.0.0', true, 'Rate Limiting Policy', 'WSO2', 'Next generation rate limiting with AI-powered predictions', '["security", "traffic-control", "ai"]', '["rate-limit", "throttling", "quota", "ai", "predictive"]', 'rate-limiting/3.0.0/assets/icon.svg', 'rate-limiting/3.0.0/assets/banner.png', '["apim-4.5+"]', '2025-03-01',
+'name: rate-limiting
+version: 3.0.0
+description: AI-powered predictive rate limiting
+configuration:
+  properties:
+    requestCount:
+      type: integer
+      description: Maximum requests per time window
+      default: 100
+      minimum: 1
+      maximum: 10000
+    timeUnit:
+      type: string
+      description: Time unit for the window
+      enum: ["second", "minute", "hour", "day"]
+      default: "minute"
+    burstCapacity:
+      type: integer
+      description: Burst capacity above normal limit
+      default: 20
+      minimum: 0
+    keyType:
+      type: string
+      description: Key type for rate limiting
+      enum: ["ip", "user", "api", "application", "custom"]
+      default: "ip"
+    customKeyExpression:
+      type: string
+      description: Custom key expression
+      default: ""
+    distributedCache:
+      type: boolean
+      description: Enable distributed caching
+      default: false
+    analytics:
+      type: boolean
+      description: Enable rate limiting analytics
+      default: true
+    reporting:
+      type: object
+      description: Reporting configuration
+      properties:
+        enabled:
+          type: boolean
+          default: false
+        interval:
+          type: string
+          enum: ["hourly", "daily", "weekly"]
+          default: "daily"
+    aiPrediction:
+      type: boolean
+      description: Enable AI-powered predictions
+      default: true
+enforcement:
+  type: "request"
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/rate-limiting/3.0.0', '{"algorithm": "sha256", "value": "dummy-checksum-rate-limiting-3.0.0"}'),
 
 -- JWT Authentication Policy Versions  
 ('jwt-authentication', '1.0.0', false, 'JWT Authentication Policy', 'WSO2', 'Validates JSON Web Tokens (JWT) for API authentication and authorization', '["security", "authentication"]', '["jwt", "token", "auth"]', 'jwt-authentication/1.0.0/assets/icon.svg', 'jwt-authentication/1.0.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-02-10',
@@ -113,7 +342,7 @@ configuration:
       default: "RS256"
 enforcement:
   type: "request"
-  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/jwt-authentication/1.0.0'),
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/jwt-authentication/1.0.0', '{"algorithm": "sha256", "value": "dummy-checksum-jwt-auth-1.0.0"}'),
 
 ('jwt-authentication', '2.0.0', false, 'JWT Authentication Policy', 'WSO2', 'Advanced JWT validation with multi-issuer support and enhanced security', '["security", "authentication"]', '["jwt", "token", "auth", "multi-issuer"]', 'jwt-authentication/2.0.0/assets/icon.svg', 'jwt-authentication/2.0.0/assets/banner.png', '["apim-4.5+"]', '2024-06-15',
 'name: jwt-authentication
@@ -151,9 +380,9 @@ configuration:
       default: 300
 enforcement:
   type: "request"
-  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/jwt-authentication/2.0.0'),
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/jwt-authentication/2.0.0', '{"algorithm": "sha256", "value": "dummy-checksum-jwt-auth-2.0.0"}'),
 
-('jwt-authentication', '2.1.0', true, 'JWT Authentication Policy', 'WSO2', 'Latest JWT validation with caching and performance improvements', '["security", "authentication"]', '["jwt", "token", "auth", "multi-issuer", "cache"]', 'jwt-authentication/2.1.0/assets/icon.svg', 'jwt-authentication/2.1.0/assets/banner.png', '["apim-4.5+"]', '2024-09-10',
+('jwt-authentication', '2.1.0', false, 'JWT Authentication Policy', 'WSO2', 'Latest JWT validation with caching and performance improvements', '["security", "authentication"]', '["jwt", "token", "auth", "multi-issuer", "cache"]', 'jwt-authentication/2.1.0/assets/icon.svg', 'jwt-authentication/2.1.0/assets/banner.png', '["apim-4.5+"]', '2024-09-10',
 'name: jwt-authentication
 version: 2.1.0
 description: JWT validation with caching and performance improvements
@@ -197,7 +426,123 @@ configuration:
       default: 1000
 enforcement:
   type: "request"
-  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/jwt-authentication/2.1.0'),
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/jwt-authentication/2.1.0', '{"algorithm": "sha256", "value": "dummy-checksum-jwt-auth-2.1.0"}'),
+
+('jwt-authentication', '2.2.0', false, 'JWT Authentication Policy', 'WSO2', 'Enhanced JWT validation with advanced security features', '["security", "authentication"]', '["jwt", "token", "auth", "multi-issuer", "cache", "security"]', 'jwt-authentication/2.2.0/assets/icon.svg', 'jwt-authentication/2.2.0/assets/banner.png', '["apim-4.5+"]', '2024-12-01',
+'name: jwt-authentication
+version: 2.2.0
+description: JWT validation with advanced security
+configuration:
+  properties:
+    jwtHeader:
+      type: string
+      description: Header name containing JWT token
+      default: "Authorization"
+    tokenPrefix:
+      type: string
+      description: Token prefix (e.g., Bearer)
+      default: "Bearer "
+    issuers:
+      type: array
+      description: List of trusted issuers
+      items:
+        type: object
+        properties:
+          issuer:
+            type: string
+          audience:
+            type: string
+          algorithm:
+            type: string
+    validateExpiry:
+      type: boolean
+      description: Validate token expiry
+      default: true
+    clockSkew:
+      type: integer
+      description: Clock skew tolerance in seconds
+      default: 300
+    enableCaching:
+      type: boolean
+      description: Enable JWT validation caching
+      default: true
+    cacheSize:
+      type: integer
+      description: Maximum cache size
+      default: 1000
+    securityFeatures:
+      type: object
+      description: Advanced security features
+      properties:
+        replayAttackProtection:
+          type: boolean
+          default: true
+        tokenBlacklist:
+          type: boolean
+          default: false
+enforcement:
+  type: "request"
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/jwt-authentication/2.2.0', '{"algorithm": "sha256", "value": "dummy-checksum-jwt-auth-2.2.0"}'),
+
+('jwt-authentication', '3.0.0', true, 'JWT Authentication Policy', 'WSO2', 'Next-generation JWT validation with AI-powered threat detection', '["security", "authentication", "ai"]', '["jwt", "token", "auth", "ai", "threat-detection"]', 'jwt-authentication/3.0.0/assets/icon.svg', 'jwt-authentication/3.0.0/assets/banner.png', '["apim-4.5+"]', '2025-04-15',
+'name: jwt-authentication
+version: 3.0.0
+description: AI-powered JWT validation
+configuration:
+  properties:
+    jwtHeader:
+      type: string
+      description: Header name containing JWT token
+      default: "Authorization"
+    tokenPrefix:
+      type: string
+      description: Token prefix (e.g., Bearer)
+      default: "Bearer "
+    issuers:
+      type: array
+      description: List of trusted issuers
+      items:
+        type: object
+        properties:
+          issuer:
+            type: string
+          audience:
+            type: string
+          algorithm:
+            type: string
+    validateExpiry:
+      type: boolean
+      description: Validate token expiry
+      default: true
+    clockSkew:
+      type: integer
+      description: Clock skew tolerance in seconds
+      default: 300
+    enableCaching:
+      type: boolean
+      description: Enable JWT validation caching
+      default: true
+    cacheSize:
+      type: integer
+      description: Maximum cache size
+      default: 1000
+    securityFeatures:
+      type: object
+      description: Advanced security features
+      properties:
+        replayAttackProtection:
+          type: boolean
+          default: true
+        tokenBlacklist:
+          type: boolean
+          default: false
+    aiThreatDetection:
+      type: boolean
+      description: Enable AI-based threat detection
+      default: true
+enforcement:
+  type: "request"
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/jwt-authentication/3.0.0', '{"algorithm": "sha256", "value": "dummy-checksum-jwt-auth-3.0.0"}'),
 
 -- CORS Policy Versions
 ('cors-policy', '1.0.0', false, 'CORS Policy', 'Community', 'Manages Cross-Origin Resource Sharing (CORS) headers for web API security', '["security", "web"]', '["cors", "cross-origin", "headers"]', 'cors-policy/1.0.0/assets/icon.svg', 'cors-policy/1.0.0/assets/banner.png', '["apim-4.5+", "apim-4.4+", "apim-4.3+"]', '2024-01-25',
@@ -230,7 +575,7 @@ configuration:
       default: 3600
 enforcement:
   type: "response"
-  stage: "post"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/cors-policy/1.0.0'),
+  stage: "post"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/cors-policy/1.0.0', '{"algorithm": "sha256", "value": "dummy-checksum-cors-1.0.0"}'),
 
 ('cors-policy', '1.1.0', false, 'CORS Policy', 'Community', 'Enhanced CORS policy with credentials support', '["security", "web"]', '["cors", "cross-origin", "headers", "credentials"]', 'cors-policy/1.1.0/assets/icon.svg', 'cors-policy/1.1.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-04-15',
 'name: cors-policy
@@ -272,7 +617,7 @@ configuration:
       default: 3600
 enforcement:
   type: "response"
-  stage: "post"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/cors-policy/1.1.0'),
+  stage: "post"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/cors-policy/1.1.0', '{"algorithm": "sha256", "value": "dummy-checksum-cors-1.1.0"}'),
 
 ('cors-policy', '1.2.0', true, 'CORS Policy', 'Community', 'Latest CORS policy with dynamic origin validation', '["security", "web"]', '["cors", "cross-origin", "headers", "dynamic"]', 'cors-policy/1.2.0/assets/icon.svg', 'cors-policy/1.2.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-08-20',
 'name: cors-policy
@@ -322,7 +667,7 @@ configuration:
       default: ".*"
 enforcement:
   type: "response"
-  stage: "post"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/cors-policy/1.2.0'),
+  stage: "post"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/cors-policy/1.2.0', '{"algorithm": "sha256", "value": "dummy-checksum-cors-1.2.0"}'),
 
 -- API Throttling Policy Versions
 ('api-throttling', '1.0.0', false, 'API Throttling Policy', 'WSO2', 'Advanced throttling with burst capacity and dynamic rate limiting', '["traffic-control", "performance"]', '["throttling", "burst", "dynamic"]', 'api-throttling/1.0.0/assets/icon.svg', 'api-throttling/1.0.0/assets/banner.png', '["apim-4.5+"]', '2024-03-01',
@@ -358,7 +703,7 @@ configuration:
       default: ""
 enforcement:
   type: "request"
-  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/api-throttling/1.0.0'),
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/api-throttling/1.0.0', '{"algorithm": "sha256", "value": "dummy-checksum-throttling-1.0.0"}'),
 
 ('api-throttling', '2.0.0', true, 'API Throttling Policy', 'WSO2', 'Next-generation throttling with machine learning capabilities', '["traffic-control", "performance", "ml"]', '["throttling", "burst", "dynamic", "ml", "adaptive"]', 'api-throttling/2.0.0/assets/icon.svg', 'api-throttling/2.0.0/assets/banner.png', '["apim-4.5+"]', '2024-07-10',
 'name: api-throttling
@@ -406,7 +751,7 @@ configuration:
           default: 0.1
 enforcement:
   type: "request"
-  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/api-throttling/2.0.0'),
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/api-throttling/2.0.0', '{"algorithm": "sha256", "value": "dummy-checksum-throttling-2.0.0"}'),
 
 -- Request Transformation Policy Versions
 ('request-transformation', '1.0.0', false, 'Request Transformation Policy', 'Community', 'Transforms incoming API requests including headers, query parameters, and request body', '["transformation", "mediation"]', '["transform", "headers", "body"]', 'request-transformation/1.0.0/assets/icon.svg', 'request-transformation/1.0.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-02-20',
@@ -459,7 +804,7 @@ configuration:
           default: ""
 enforcement:
   type: "request"
-  stage: "pre"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/request-transformation/1.0.0'),
+  stage: "pre"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/request-transformation/1.0.0', '{"algorithm": "sha256", "value": "dummy-checksum-request-transform-1.0.0"}'),
 
 ('request-transformation', '1.5.0', true, 'Request Transformation Policy', 'Community', 'Enhanced request transformation with conditional logic and templating', '["transformation", "mediation"]', '["transform", "headers", "body", "conditional", "template"]', 'request-transformation/1.5.0/assets/icon.svg', 'request-transformation/1.5.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-05-30',
 'name: request-transformation
@@ -531,7 +876,7 @@ configuration:
             type: object
 enforcement:
   type: "request"
-  stage: "pre"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/request-transformation/1.5.0'),
+  stage: "pre"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/request-transformation/1.5.0', '{"algorithm": "sha256", "value": "dummy-checksum-request-transform-1.5.0"}'),
 
 -- OAuth2 Validation Policy Versions
 ('oauth2-validation', '1.0.0', true, 'OAuth2 Validation Policy', 'WSO2', 'Validates OAuth2 access tokens with introspection support', '["security", "authentication"]', '["oauth2", "token", "introspection"]', 'oauth2-validation/1.0.0/assets/icon.svg', 'oauth2-validation/1.0.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-04-05',
@@ -576,7 +921,7 @@ configuration:
       default: []
 enforcement:
   type: "request"
-  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/oauth2-validation/1.0.0'),
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/oauth2-validation/1.0.0', '{"algorithm": "sha256", "value": "dummy-checksum-oauth2-1.0.0"}'),
 
 -- Response Caching Policy Versions
 ('response-caching', '1.0.0', false, 'Response Caching Policy', 'Community', 'Caches API responses to improve performance and reduce backend load', '["performance", "caching"]', '["cache", "response", "performance"]', 'response-caching/1.0.0/assets/icon.svg', 'response-caching/1.0.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-03-10',
@@ -615,7 +960,7 @@ configuration:
       default: ["User-Agent", "Accept-Encoding"]
 enforcement:
   type: "response"
-  stage: "post"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/response-caching/1.0.0'),
+  stage: "post"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/response-caching/1.0.0', '{"algorithm": "sha256", "value": "dummy-checksum-response-cache-1.0.0"}'),
 
 ('response-caching', '1.1.0', true, 'Response Caching Policy', 'Community', 'Enhanced response caching with conditional caching and cache invalidation', '["performance", "caching"]', '["cache", "response", "performance", "invalidation"]', 'response-caching/1.1.0/assets/icon.svg', 'response-caching/1.1.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-06-25',
 'name: response-caching
@@ -675,7 +1020,7 @@ configuration:
       default: []
 enforcement:
   type: "response"
-  stage: "post"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/response-caching/1.1.0'),
+  stage: "post"', 'github', 'https://github.com/community/policy-hub/tree/main/storage/response-caching/1.1.0', '{"algorithm": "sha256", "value": "dummy-checksum-response-cache-1.1.0"}'),
 
 -- IP Filtering Policy Versions  
 ('ip-filtering', '1.0.0', true, 'IP Filtering Policy', 'WSO2', 'Allows or blocks requests based on client IP addresses with support for CIDR notation', '["security", "access-control"]', '["ip", "filter", "whitelist", "blacklist", "cidr"]', 'ip-filtering/1.0.0/assets/icon.svg', 'ip-filtering/1.0.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-02-28',
@@ -716,7 +1061,7 @@ configuration:
       default: "deny"
 enforcement:
   type: "request"
-  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/ip-filtering/1.0.0'),
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/ip-filtering/1.0.0', '{"algorithm": "sha256", "value": "dummy-checksum-ip-filter-1.0.0"}'),
 
 -- API Key Authentication Policy Versions
 ('api-key-auth', '1.0.0', false, 'API Key Authentication Policy', 'WSO2', 'Validates API keys for simple authentication mechanism', '["security", "authentication"]', '["api-key", "auth", "simple"]', 'api-key-auth/1.0.0/assets/icon.svg', 'api-key-auth/1.0.0/assets/banner.png', '["apim-4.5+", "apim-4.4+", "apim-4.3+"]', '2024-01-10',
@@ -750,7 +1095,7 @@ configuration:
       default: true
 enforcement:
   type: "request"
-  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/api-key-auth/1.0.0'),
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/api-key-auth/1.0.0', '{"algorithm": "sha256", "value": "dummy-checksum-api-key-1.0.0"}'),
 
 ('api-key-auth', '2.0.0', true, 'API Key Authentication Policy', 'WSO2', 'Advanced API key authentication with key management and rotation support', '["security", "authentication"]', '["api-key", "auth", "rotation", "management"]', 'api-key-auth/2.0.0/assets/icon.svg', 'api-key-auth/2.0.0/assets/banner.png', '["apim-4.5+"]', '2024-05-15',
 'name: api-key-auth
@@ -808,7 +1153,274 @@ configuration:
           default: 100
 enforcement:
   type: "request"
-  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/api-key-auth/2.0.0');
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/api-key-auth/2.0.0', '{"algorithm": "sha256", "value": "dummy-checksum-api-key-2.0.0"}'),
+
+-- Header Validation Policy Versions
+('header-validation', '1.0.0', false, 'Header Validation Policy', 'WSO2', 'Validates HTTP headers in API requests for security and compliance', '["security", "validation"]', '["headers", "validation", "security"]', 'header-validation/1.0.0/assets/icon.svg', 'header-validation/1.0.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-01-20',
+'name: header-validation
+version: 1.0.0
+description: Basic header validation policy
+configuration:
+  properties:
+    requiredHeaders:
+      type: array
+      description: List of required headers
+      items:
+        type: string
+      default: []
+    forbiddenHeaders:
+      type: array
+      description: List of forbidden headers
+      items:
+        type: string
+      default: []
+    headerValidations:
+      type: array
+      description: Custom header validation rules
+      items:
+        type: object
+        properties:
+          name:
+            type: string
+          pattern:
+            type: string
+          required:
+            type: boolean
+      default: []
+enforcement:
+  type: "request"
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/header-validation/1.0.0', '{"algorithm": "sha256", "value": "dummy-checksum-header-validation-1.0.0"}'),
+
+('header-validation', '1.1.0', false, 'Header Validation Policy', 'WSO2', 'Enhanced header validation with regex patterns and case sensitivity', '["security", "validation"]', '["headers", "validation", "security", "regex"]', 'header-validation/1.1.0/assets/icon.svg', 'header-validation/1.1.0/assets/banner.png', '["apim-4.5+", "apim-4.4+"]', '2024-04-10',
+'name: header-validation
+version: 1.1.0
+description: Enhanced header validation with regex
+configuration:
+  properties:
+    requiredHeaders:
+      type: array
+      description: List of required headers
+      items:
+        type: string
+      default: []
+    forbiddenHeaders:
+      type: array
+      description: List of forbidden headers
+      items:
+        type: string
+      default: []
+    headerValidations:
+      type: array
+      description: Custom header validation rules
+      items:
+        type: object
+        properties:
+          name:
+            type: string
+          pattern:
+            type: string
+          required:
+            type: boolean
+          caseSensitive:
+            type: boolean
+            default: true
+      default: []
+    allowEmptyValues:
+      type: boolean
+      description: Allow empty header values
+      default: false
+enforcement:
+  type: "request"
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/header-validation/1.1.0', '{"algorithm": "sha256", "value": "dummy-checksum-header-validation-1.1.0"}'),
+
+('header-validation', '2.0.0', false, 'Header Validation Policy', 'WSO2', 'Advanced header validation with custom scripts and transformations', '["security", "validation", "transformation"]', '["headers", "validation", "security", "script", "transform"]', 'header-validation/2.0.0/assets/icon.svg', 'header-validation/2.0.0/assets/banner.png', '["apim-4.5+"]', '2024-08-15',
+'name: header-validation
+version: 2.0.0
+description: Advanced header validation with scripts
+configuration:
+  properties:
+    requiredHeaders:
+      type: array
+      description: List of required headers
+      items:
+        type: string
+      default: []
+    forbiddenHeaders:
+      type: array
+      description: List of forbidden headers
+      items:
+        type: string
+      default: []
+    headerValidations:
+      type: array
+      description: Custom header validation rules
+      items:
+        type: object
+        properties:
+          name:
+            type: string
+          pattern:
+            type: string
+          required:
+            type: boolean
+          caseSensitive:
+            type: boolean
+            default: true
+          script:
+            type: string
+            description: Custom validation script
+      default: []
+    allowEmptyValues:
+      type: boolean
+      description: Allow empty header values
+      default: false
+    transformations:
+      type: array
+      description: Header transformation rules
+      items:
+        type: object
+        properties:
+          name:
+            type: string
+          action:
+            type: string
+            enum: ["add", "remove", "modify"]
+          value:
+            type: string
+      default: []
+enforcement:
+  type: "request"
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/header-validation/2.0.0', '{"algorithm": "sha256", "value": "dummy-checksum-header-validation-2.0.0"}'),
+
+('header-validation', '2.1.0', false, 'Header Validation Policy', 'WSO2', 'Header validation with performance optimizations and caching', '["security", "validation", "performance"]', '["headers", "validation", "security", "cache", "performance"]', 'header-validation/2.1.0/assets/icon.svg', 'header-validation/2.1.0/assets/banner.png', '["apim-4.5+"]', '2024-11-20',
+'name: header-validation
+version: 2.1.0
+description: Header validation with caching
+configuration:
+  properties:
+    requiredHeaders:
+      type: array
+      description: List of required headers
+      items:
+        type: string
+      default: []
+    forbiddenHeaders:
+      type: array
+      description: List of forbidden headers
+      items:
+        type: string
+      default: []
+    headerValidations:
+      type: array
+      description: Custom header validation rules
+      items:
+        type: object
+        properties:
+          name:
+            type: string
+          pattern:
+            type: string
+          required:
+            type: boolean
+          caseSensitive:
+            type: boolean
+            default: true
+          script:
+            type: string
+            description: Custom validation script
+      default: []
+    allowEmptyValues:
+      type: boolean
+      description: Allow empty header values
+      default: false
+    transformations:
+      type: array
+      description: Header transformation rules
+      items:
+        type: object
+        properties:
+          name:
+            type: string
+          action:
+            type: string
+            enum: ["add", "remove", "modify"]
+          value:
+            type: string
+      default: []
+    caching:
+      type: boolean
+      description: Enable validation result caching
+      default: true
+enforcement:
+  type: "request"
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/header-validation/2.1.0', '{"algorithm": "sha256", "value": "dummy-checksum-header-validation-2.1.0"}'),
+
+('header-validation', '3.0.0', true, 'Header Validation Policy', 'WSO2', 'AI-powered header validation with anomaly detection', '["security", "validation", "ai"]', '["headers", "validation", "security", "ai", "anomaly"]', 'header-validation/3.0.0/assets/icon.svg', 'header-validation/3.0.0/assets/banner.png', '["apim-4.5+"]', '2025-02-10',
+'name: header-validation
+version: 3.0.0
+description: AI-powered header validation
+configuration:
+  properties:
+    requiredHeaders:
+      type: array
+      description: List of required headers
+      items:
+        type: string
+      default: []
+    forbiddenHeaders:
+      type: array
+      description: List of forbidden headers
+      items:
+        type: string
+      default: []
+    headerValidations:
+      type: array
+      description: Custom header validation rules
+      items:
+        type: object
+        properties:
+          name:
+            type: string
+          pattern:
+            type: string
+          required:
+            type: boolean
+          caseSensitive:
+            type: boolean
+            default: true
+          script:
+            type: string
+            description: Custom validation script
+      default: []
+    allowEmptyValues:
+      type: boolean
+      description: Allow empty header values
+      default: false
+    transformations:
+      type: array
+      description: Header transformation rules
+      items:
+        type: object
+        properties:
+          name:
+            type: string
+          action:
+            type: string
+            enum: ["add", "remove", "modify"]
+          value:
+            type: string
+      default: []
+    caching:
+      type: boolean
+      description: Enable validation result caching
+      default: true
+    aiAnomalyDetection:
+      type: boolean
+      description: Enable AI-based anomaly detection
+      default: true
+enforcement:
+  type: "request"
+  stage: "pre"', 'github', 'https://github.com/wso2/policy-hub/tree/main/storage/header-validation/3.0.0', '{"algorithm": "sha256", "value": "dummy-checksum-header-validation-3.0.0"}');
 
 -- Insert policy documentation
 INSERT INTO policy_docs (policy_version_id, page, content_md) VALUES
@@ -876,6 +1488,111 @@ Enhanced version of the Rate Limiting Policy with burst capacity support and imp
 ## Migration from 1.0.0
 The 1.1.0 version is backward compatible with 1.0.0 configurations. Simply add the `burstCapacity` parameter to enable burst handling.'),
 
+-- Rate Limiting 1.2.0 docs
+((SELECT id FROM policy_version WHERE policy_name = 'rate-limiting' AND version = '1.2.0'), 'overview',
+'# Rate Limiting Policy 1.2.0
+
+## Overview
+Performance-optimized version with additional key types and custom expressions.
+
+## New Features in 1.2.0
+- **Custom Key Expressions**: Support for custom key extraction logic
+- **Performance Improvements**: Optimized rate limiting algorithms
+- **Additional Key Types**: Support for custom keys
+
+## Key Features
+- All features from 1.1.0
+- Custom key expressions
+- Better performance
+- Enhanced flexibility
+
+## Migration from 1.1.0
+Add `customKeyExpression` for advanced key extraction.'),
+
+-- Rate Limiting 1.3.0 docs
+((SELECT id FROM policy_version WHERE policy_name = 'rate-limiting' AND version = '1.3.0'), 'overview',
+'# Rate Limiting Policy 1.3.0
+
+## Overview
+Distributed caching support for high-availability deployments.
+
+## New Features in 1.3.0
+- **Distributed Caching**: Support for distributed rate limiting state
+- **High Availability**: Better support for clustered deployments
+- **Scalability Improvements**: Enhanced performance in large-scale environments
+
+## Key Features
+- All features from 1.2.0
+- Distributed caching
+- High availability
+- Scalability
+
+## Migration from 1.2.0
+Enable `distributedCache` for clustered deployments.'),
+
+-- Rate Limiting 2.0.0 docs
+((SELECT id FROM policy_version WHERE policy_name = 'rate-limiting' AND version = '2.0.0'), 'overview',
+'# Rate Limiting Policy 2.0.0
+
+## Overview
+Major update with advanced algorithms and built-in analytics.
+
+## New Features in 2.0.0
+- **Advanced Algorithms**: New rate limiting algorithms
+- **Built-in Analytics**: Real-time analytics and monitoring
+- **Enhanced Configuration**: More flexible configuration options
+
+## Key Features
+- Advanced rate limiting algorithms
+- Real-time analytics
+- Enhanced monitoring
+- Flexible configuration
+
+## Migration from 1.3.0
+Review configuration for new analytics settings.'),
+
+-- Rate Limiting 2.1.0 docs
+((SELECT id FROM policy_version WHERE policy_name = 'rate-limiting' AND version = '2.1.0'), 'overview',
+'# Rate Limiting Policy 2.1.0
+
+## Overview
+Enhanced analytics with reporting capabilities.
+
+## New Features in 2.1.0
+- **Reporting**: Configurable reporting intervals
+- **Enhanced Analytics**: More detailed analytics data
+- **Dashboard Integration**: Better integration with monitoring dashboards
+
+## Key Features
+- All features from 2.0.0
+- Configurable reporting
+- Enhanced analytics
+- Dashboard integration
+
+## Migration from 2.0.0
+Configure reporting settings as needed.'),
+
+-- Rate Limiting 3.0.0 docs
+((SELECT id FROM policy_version WHERE policy_name = 'rate-limiting' AND version = '3.0.0'), 'overview',
+'# Rate Limiting Policy 3.0.0
+
+## Overview
+Next-generation rate limiting with AI-powered predictions.
+
+## New Features in 3.0.0
+- **AI Predictions**: Machine learning-based rate limit predictions
+- **Predictive Scaling**: Automatic adjustment based on patterns
+- **Smart Throttling**: Intelligent throttling decisions
+
+## Key Features
+- AI-powered predictions
+- Predictive scaling
+- Smart throttling
+- Advanced analytics
+
+## Migration from 2.1.0
+Enable `aiPrediction` for AI features.'),
+
 -- JWT Authentication 1.0.0 docs
 ((SELECT id FROM policy_version WHERE policy_name = 'jwt-authentication' AND version = '1.0.0'), 'overview',
 '# JWT Authentication Policy 1.0.0
@@ -894,6 +1611,48 @@ The JWT Authentication Policy validates JSON Web Tokens (JWT) to authenticate AP
 - Regularly rotate signing keys
 - Set appropriate token expiration times
 - Validate issuer and audience claims'),
+
+-- JWT Authentication 2.2.0 docs
+((SELECT id FROM policy_version WHERE policy_name = 'jwt-authentication' AND version = '2.2.0'), 'overview',
+'# JWT Authentication Policy 2.2.0
+
+## Overview
+Enhanced JWT validation with advanced security features including replay attack protection.
+
+## New Features in 2.2.0
+- **Replay Attack Protection**: Prevent token replay attacks
+- **Token Blacklisting**: Support for token blacklists
+- **Enhanced Security**: Additional security measures
+
+## Key Features
+- All features from 2.1.0
+- Replay attack protection
+- Token blacklisting
+- Advanced security features
+
+## Migration from 2.1.0
+Enable security features for enhanced protection.'),
+
+-- JWT Authentication 3.0.0 docs
+((SELECT id FROM policy_version WHERE policy_name = 'jwt-authentication' AND version = '3.0.0'), 'overview',
+'# JWT Authentication Policy 3.0.0
+
+## Overview
+Next-generation JWT validation with AI-powered threat detection.
+
+## New Features in 3.0.0
+- **AI Threat Detection**: Machine learning-based threat detection
+- **Predictive Security**: Predict and prevent JWT-based attacks
+- **Adaptive Validation**: Self-learning validation rules
+
+## Key Features
+- All features from 2.2.0
+- AI-based threat detection
+- Predictive security
+- Adaptive validation
+
+## Migration from 2.2.0
+Enable AI features for advanced threat protection.'),
 
 -- CORS Policy 1.2.0 docs
 ((SELECT id FROM policy_version WHERE policy_name = 'cors-policy' AND version = '1.2.0'), 'overview',
@@ -937,6 +1696,109 @@ The ML-adaptive mode automatically adjusts rate limits based on:
 - Historical traffic patterns
 - Current system load
 - Error rates and response times
-- User behavior analysis');
+- User behavior analysis'),
+
+-- Header Validation 1.0.0 docs
+((SELECT id FROM policy_version WHERE policy_name = 'header-validation' AND version = '1.0.0'), 'overview',
+'# Header Validation Policy 1.0.0
+
+## Overview
+The Header Validation Policy validates HTTP headers in API requests to ensure security and compliance.
+
+## Key Features
+- Required header validation
+- Forbidden header blocking
+- Custom validation rules
+- Pattern-based validation
+
+## Use Cases
+- Enforce API security standards
+- Validate required headers
+- Block malicious headers
+- Ensure compliance with regulations'),
+
+-- Header Validation 1.1.0 docs
+((SELECT id FROM policy_version WHERE policy_name = 'header-validation' AND version = '1.1.0'), 'overview',
+'# Header Validation Policy 1.1.0
+
+## Overview
+Enhanced header validation with regex patterns and case sensitivity options.
+
+## New Features in 1.1.0
+- **Regex Patterns**: Support for regular expression validation
+- **Case Sensitivity**: Configurable case sensitivity
+- **Empty Value Handling**: Options for empty header values
+
+## Key Features
+- All features from 1.0.0
+- Regex pattern validation
+- Case sensitivity control
+- Empty value policies
+
+## Migration from 1.0.0
+Add regex patterns to existing validations for enhanced security.'),
+
+-- Header Validation 2.0.0 docs
+((SELECT id FROM policy_version WHERE policy_name = 'header-validation' AND version = '2.0.0'), 'overview',
+'# Header Validation Policy 2.0.0
+
+## Overview
+Advanced header validation with custom scripts and transformation capabilities.
+
+## New Features in 2.0.0
+- **Custom Scripts**: JavaScript-based validation logic
+- **Header Transformations**: Modify headers during validation
+- **Advanced Rules**: Complex validation scenarios
+
+## Key Features
+- All features from 1.1.0
+- Custom validation scripts
+- Header transformation
+- Advanced validation rules
+
+## Migration from 1.1.0
+Migrate simple patterns to scripts for complex validations.'),
+
+-- Header Validation 2.1.0 docs
+((SELECT id FROM policy_version WHERE policy_name = 'header-validation' AND version = '2.1.0'), 'overview',
+'# Header Validation Policy 2.1.0
+
+## Overview
+Performance-optimized header validation with caching support.
+
+## New Features in 2.1.0
+- **Validation Caching**: Cache validation results for performance
+- **Optimized Processing**: Faster header processing
+- **Memory Efficiency**: Reduced memory usage
+
+## Key Features
+- All features from 2.0.0
+- Validation result caching
+- Performance optimizations
+- Memory efficiency
+
+## Migration from 2.0.0
+Enable caching for better performance in high-traffic scenarios.'),
+
+-- Header Validation 3.0.0 docs
+((SELECT id FROM policy_version WHERE policy_name = 'header-validation' AND version = '3.0.0'), 'overview',
+'# Header Validation Policy 3.0.0
+
+## Overview
+AI-powered header validation with anomaly detection capabilities.
+
+## New Features in 3.0.0
+- **AI Anomaly Detection**: Machine learning-based anomaly detection
+- **Predictive Validation**: Predict and prevent malicious headers
+- **Adaptive Rules**: Self-learning validation rules
+
+## Key Features
+- All features from 2.1.0
+- AI-based anomaly detection
+- Predictive validation
+- Adaptive rule learning
+
+## Migration from 2.1.0
+Enable AI features for advanced threat detection.');
 
 COMMIT;

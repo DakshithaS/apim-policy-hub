@@ -1,12 +1,3 @@
-/*
- * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com). All Rights Reserved.
- *
- * This software is the property of WSO2 LLC. and its suppliers, if any.
- * Dissemination of any information or reproduction of any material contained
- * herein in any form is strictly forbidden, unless permitted by WSO2 expressly.
- * You may not alter or remove any copyright or other notice from copies of this content.
- */
-
 -- Policy Hub Database Schema (Single Table Architecture)
 
 -- Single policy_version table with all metadata
@@ -32,6 +23,7 @@ CREATE TABLE IF NOT EXISTS policy_version (
 	icon_path VARCHAR(500),
 	source_type VARCHAR(50),
 	download_url VARCHAR(1000),
+	checksum JSONB,
 	
 	created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 	updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

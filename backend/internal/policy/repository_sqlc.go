@@ -13,8 +13,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -107,6 +105,14 @@ func sqlcToPolicyVersion(spv sqlc.PolicyVersion) (*PolicyVersion, error) {
 		downloadUrl = &spv.DownloadUrl.String
 	}
 
+	var checksum *Checksum
+	if len(spv.Checksum) > 0 {
+		checksum = &Checksum{}
+		if err := checksum.Scan(spv.Checksum); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal checksum: %w", err)
+		}
+	}
+
 	var releaseDate *time.Time
 	if spv.ReleaseDate.Valid {
 		releaseDate = &spv.ReleaseDate.Time
@@ -133,9 +139,78 @@ func sqlcToPolicyVersion(spv sqlc.PolicyVersion) (*PolicyVersion, error) {
 		DefinitionYAML: spv.DefinitionYaml,
 		IconPath:       iconPath,
 		SourceType:     sourceType,
-		SourceURL:      downloadUrl,
+		DownloadURL:    downloadUrl,
+		Checksum:       checksum,
 		CreatedAt:      spv.CreatedAt.Time,
 		UpdatedAt:      spv.UpdatedAt.Time,
+	}, nil
+}
+
+func sqlcToResolvePolicyVersionFromExact(row sqlc.ResolvePoliciesExactRow) (ResolvePolicyVersion, error) {
+	var checksum *Checksum
+	if len(row.Checksum) > 0 {
+		checksum = &Checksum{}
+		if err := checksum.Scan(row.Checksum); err != nil {
+			return ResolvePolicyVersion{}, fmt.Errorf("failed to unmarshal checksum: %w", err)
+		}
+	}
+
+	return ResolvePolicyVersion{
+		PolicyName:  row.PolicyName,
+		Version:     row.Version,
+		DownloadUrl: row.DownloadUrl.String,
+		Checksum:    checksum,
+	}, nil
+}
+
+func sqlcToResolvePolicyVersionFromMajor(row sqlc.ResolvePoliciesMajorRow) (ResolvePolicyVersion, error) {
+	var checksum *Checksum
+	if len(row.Checksum) > 0 {
+		checksum = &Checksum{}
+		if err := checksum.Scan(row.Checksum); err != nil {
+			return ResolvePolicyVersion{}, fmt.Errorf("failed to unmarshal checksum: %w", err)
+		}
+	}
+
+	return ResolvePolicyVersion{
+		PolicyName:  row.PolicyName,
+		Version:     row.Version,
+		DownloadUrl: row.DownloadUrl.String,
+		Checksum:    checksum,
+	}, nil
+}
+
+func sqlcToResolvePolicyVersionFromMinor(row sqlc.ResolvePoliciesMinorRow) (ResolvePolicyVersion, error) {
+	var checksum *Checksum
+	if len(row.Checksum) > 0 {
+		checksum = &Checksum{}
+		if err := checksum.Scan(row.Checksum); err != nil {
+			return ResolvePolicyVersion{}, fmt.Errorf("failed to unmarshal checksum: %w", err)
+		}
+	}
+
+	return ResolvePolicyVersion{
+		PolicyName:  row.PolicyName,
+		Version:     row.Version,
+		DownloadUrl: row.DownloadUrl.String,
+		Checksum:    checksum,
+	}, nil
+}
+
+func sqlcToResolvePolicyVersionFromPatch(row sqlc.ResolvePoliciesPatchRow) (ResolvePolicyVersion, error) {
+	var checksum *Checksum
+	if len(row.Checksum) > 0 {
+		checksum = &Checksum{}
+		if err := checksum.Scan(row.Checksum); err != nil {
+			return ResolvePolicyVersion{}, fmt.Errorf("failed to unmarshal checksum: %w", err)
+		}
+	}
+
+	return ResolvePolicyVersion{
+		PolicyName:  row.PolicyName,
+		Version:     row.Version,
+		DownloadUrl: row.DownloadUrl.String,
+		Checksum:    checksum,
 	}, nil
 }
 
@@ -218,7 +293,7 @@ func filterRowToPolicyVersion(row sqlc.FilterPoliciesByMultipleRow) (*PolicyVers
 		DefinitionYAML: row.DefinitionYaml,
 		IconPath:       iconPath,
 		SourceType:     sourceType,
-		SourceURL:      downloadUrl,
+		DownloadURL:    downloadUrl,
 		CreatedAt:      row.CreatedAt.Time,
 		UpdatedAt:      row.UpdatedAt.Time,
 	}, nil
@@ -449,6 +524,7 @@ func (r *SQLCRepository) CreatePolicyVersion(ctx context.Context, version *Polic
 
 	categoriesJSON, _ := json.Marshal(version.Categories)
 	tagsJSON, _ := json.Marshal(version.Tags)
+	checksumJSON, _ := json.Marshal(version.Checksum)
 
 	spv, err := q.InsertPolicyVersion(ctx, sqlc.InsertPolicyVersionParams{
 		PolicyName:         version.PolicyName,
@@ -466,7 +542,8 @@ func (r *SQLCRepository) CreatePolicyVersion(ctx context.Context, version *Polic
 		DefinitionYaml:     version.DefinitionYAML,
 		IconPath:           ptrToPgtypeText(version.IconPath),
 		SourceType:         ptrToPgtypeText(version.SourceType),
-		DownloadUrl:        ptrToPgtypeText(version.SourceURL),
+		DownloadUrl:        ptrToPgtypeText(version.DownloadURL),
+		Checksum:           checksumJSON,
 	})
 
 	if err != nil {
@@ -526,198 +603,133 @@ func (r *SQLCRepository) UpsertPolicyDoc(ctx context.Context, doc *PolicyDoc) (*
 	return sqlcToPolicyDoc(spd), nil
 }
 
-// Strategy-based policy retrieval methods
-
-func (r *SQLCRepository) GetPolicyVersionByExact(ctx context.Context, name, version string) (*PolicyVersion, error) {
-	q := r.queries
-	spv, err := q.GetPolicyVersionByExact(ctx, sqlc.GetPolicyVersionByExactParams{
-		PolicyName: name,
-		Version:    version,
-	})
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			return nil, errs.NewNotFoundError(errs.CodePolicyVersionNotFound, "Policy version not found", map[string]any{"policyName": name, "version": version})
-		}
-		return nil, errs.NewDatabaseError("failed to get policy version by exact", map[string]any{"error": err.Error()})
-	}
-	return sqlcToPolicyVersion(spv)
-}
-
-func (r *SQLCRepository) GetPolicyVersionByLatestPatch(ctx context.Context, name string, majorVersion, minorVersion int32) (*PolicyVersion, error) {
-	q := r.queries
-	spv, err := q.GetPolicyVersionByLatestPatch(ctx, sqlc.GetPolicyVersionByLatestPatchParams{
-		PolicyName:   name,
-		MajorVersion: pgtype.Int4{Int32: majorVersion, Valid: true},
-		MinorVersion: pgtype.Int4{Int32: minorVersion, Valid: true},
-	})
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			return nil, errs.NewNotFoundError(errs.CodePolicyVersionNotFound, "Policy version not found", map[string]any{"policyName": name, "majorVersion": majorVersion, "minorVersion": minorVersion})
-		}
-		return nil, errs.NewDatabaseError("failed to get policy version by latest patch", map[string]any{"error": err.Error()})
-	}
-	return sqlcToPolicyVersion(spv)
-}
-
-func (r *SQLCRepository) GetPolicyVersionByLatestMinor(ctx context.Context, name string, majorVersion int32) (*PolicyVersion, error) {
-	q := r.queries
-	spv, err := q.GetPolicyVersionByLatestMinor(ctx, sqlc.GetPolicyVersionByLatestMinorParams{
-		PolicyName:   name,
-		MajorVersion: pgtype.Int4{Int32: majorVersion, Valid: true},
-	})
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			return nil, errs.NewNotFoundError(errs.CodePolicyVersionNotFound, "Policy version not found", map[string]any{"policyName": name, "majorVersion": majorVersion})
-		}
-		return nil, errs.NewDatabaseError("failed to get policy version by latest minor", map[string]any{"error": err.Error()})
-	}
-	return sqlcToPolicyVersion(spv)
-}
-
-func (r *SQLCRepository) GetPolicyVersionByLatestMajor(ctx context.Context, name string) (*PolicyVersion, error) {
-	q := r.queries
-	spv, err := q.GetPolicyVersionByLatestMajor(ctx, name)
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			return nil, errs.NewNotFoundError(errs.CodePolicyVersionNotFound, "Policy version not found", map[string]any{"policyName": name})
-		}
-		return nil, errs.NewDatabaseError("failed to get policy version by latest major", map[string]any{"error": err.Error()})
-	}
-	return sqlcToPolicyVersion(spv)
-}
-
 // Bulk strategy-based policy retrieval methods
 
-func (r *SQLCRepository) BulkGetPolicyVersionsByExact(ctx context.Context, requests []ExactVersionRequest) ([]*PolicyVersion, error) {
+func (r *SQLCRepository) BulkGetPolicyVersionsByExact(ctx context.Context, requests []ExactVersionRequest) ([]ResolvePolicyVersion, error) {
 	if len(requests) == 0 {
-		return []*PolicyVersion{}, nil
+		return []ResolvePolicyVersion{}, nil
 	}
 
-	// For now, fall back to individual queries for exact matches
-	// This is still efficient since we use individual optimal queries
-	results := make([]*PolicyVersion, 0, len(requests))
-	for _, req := range requests {
-		pv, err := r.GetPolicyVersionByExact(ctx, req.Name, req.Version)
-		if err == nil {
-			results = append(results, pv)
-		}
-		// Skip errors - they will be handled as missing policies
+	// Extract policy names and versions
+	policyNames := make([]string, len(requests))
+	versions := make([]string, len(requests))
+	for i, req := range requests {
+		policyNames[i] = req.Name
+		versions[i] = req.Version
 	}
 
-	return results, nil
-}
-
-func (r *SQLCRepository) BulkGetPolicyVersionsByLatestPatch(ctx context.Context, requests []PatchVersionRequest) ([]*PolicyVersion, error) {
-	if len(requests) == 0 {
-		return []*PolicyVersion{}, nil
-	}
-
-	// For now, fall back to individual queries
-	results := make([]*PolicyVersion, 0, len(requests))
-	for _, req := range requests {
-		pv, err := r.GetPolicyVersionByLatestPatch(ctx, req.Name, req.MajorVersion, req.MinorVersion)
-		if err == nil {
-			results = append(results, pv)
-		}
-	}
-
-	return results, nil
-}
-
-func (r *SQLCRepository) BulkGetPolicyVersionsByLatestMinor(ctx context.Context, requests []MinorVersionRequest) ([]*PolicyVersion, error) {
-	if len(requests) == 0 {
-		return []*PolicyVersion{}, nil
-	}
-
-	// For now, fall back to individual queries
-	results := make([]*PolicyVersion, 0, len(requests))
-	for _, req := range requests {
-		pv, err := r.GetPolicyVersionByLatestMinor(ctx, req.Name, req.MajorVersion)
-		if err == nil {
-			results = append(results, pv)
-		}
-	}
-
-	return results, nil
-}
-
-func (r *SQLCRepository) BulkGetPolicyVersionsByLatestMajor(ctx context.Context, policyNames []string) ([]*PolicyVersion, error) {
-	if len(policyNames) == 0 {
-		return []*PolicyVersion{}, nil
-	}
-
-	// Use the bulk query for this case since it's simpler
 	q := r.queries
-	spvs, err := q.BulkGetPolicyVersionsByNames(ctx, policyNames)
+	rows, err := q.ResolvePoliciesExact(ctx, sqlc.ResolvePoliciesExactParams{
+		Column1: policyNames,
+		Column2: versions,
+	})
 	if err != nil {
-		return nil, errs.NewDatabaseError("failed to bulk get policy versions by names", map[string]any{"error": err.Error()})
+		return nil, errs.NewDatabaseError("failed to resolve policies by exact version", map[string]any{"error": err.Error()})
 	}
 
-	// Group by policy name and find latest major version for each
-	policyMap := make(map[string][]*PolicyVersion)
-	for _, spv := range spvs {
-		pv, err := sqlcToPolicyVersion(spv)
+	// Convert to ResolvePolicyVersion
+	resolveVersions := make([]ResolvePolicyVersion, 0, len(rows))
+	for _, row := range rows {
+		rpv, err := sqlcToResolvePolicyVersionFromExact(row)
 		if err != nil {
-			continue
+			return nil, err
 		}
-		policyMap[pv.PolicyName] = append(policyMap[pv.PolicyName], pv)
+		resolveVersions = append(resolveVersions, rpv)
 	}
 
-	// Find latest major version for each policy
-	results := make([]*PolicyVersion, 0, len(policyNames))
-	for _, policyName := range policyNames {
-		if versions, exists := policyMap[policyName]; exists {
-			latestVersion := r.findLatestMajorVersion(versions)
-			if latestVersion != nil {
-				results = append(results, latestVersion)
-			}
-		}
-	}
-
-	return results, nil
+	return resolveVersions, nil
 }
 
-// Helper function to find latest major version from a slice of PolicyVersion
-func (r *SQLCRepository) findLatestMajorVersion(versions []*PolicyVersion) *PolicyVersion {
-	if len(versions) == 0 {
-		return nil
+func (r *SQLCRepository) BulkGetPolicyVersionsByLatestPatch(ctx context.Context, requests []PatchVersionRequest) ([]ResolvePolicyVersion, error) {
+	if len(requests) == 0 {
+		return []ResolvePolicyVersion{}, nil
 	}
 
-	latest := versions[0]
-	for _, pv := range versions[1:] {
-		if r.compareVersions(pv.Version, latest.Version) > 0 {
-			latest = pv
+	// Extract policy names and base versions
+	policyNames := make([]string, len(requests))
+	baseVersions := make([]string, len(requests))
+	for i, req := range requests {
+		policyNames[i] = req.Name
+		baseVersions[i] = fmt.Sprintf("%d.%d", req.MajorVersion, req.MinorVersion)
+	}
+
+	q := r.queries
+	rows, err := q.ResolvePoliciesPatch(ctx, sqlc.ResolvePoliciesPatchParams{
+		Column1: policyNames,
+		Column2: baseVersions,
+	})
+	if err != nil {
+		return nil, errs.NewDatabaseError("failed to resolve policies by latest patch", map[string]any{"error": err.Error()})
+	}
+
+	// Convert to ResolvePolicyVersion
+	resolveVersions := make([]ResolvePolicyVersion, 0, len(rows))
+	for _, row := range rows {
+		rpv, err := sqlcToResolvePolicyVersionFromPatch(row)
+		if err != nil {
+			return nil, err
 		}
+		resolveVersions = append(resolveVersions, rpv)
 	}
 
-	return latest
+	return resolveVersions, nil
 }
 
-// Helper function to compare semantic versions
-func (r *SQLCRepository) compareVersions(v1, v2 string) int {
-	// Parse versions
-	v1Parts := strings.Split(v1, ".")
-	v2Parts := strings.Split(v2, ".")
-
-	// Ensure both have 3 parts
-	for len(v1Parts) < 3 {
-		v1Parts = append(v1Parts, "0")
-	}
-	for len(v2Parts) < 3 {
-		v2Parts = append(v2Parts, "0")
+func (r *SQLCRepository) BulkGetPolicyVersionsByLatestMinor(ctx context.Context, requests []MinorVersionRequest) ([]ResolvePolicyVersion, error) {
+	if len(requests) == 0 {
+		return []ResolvePolicyVersion{}, nil
 	}
 
-	// Compare each part
-	for i := 0; i < 3; i++ {
-		v1Int, _ := strconv.Atoi(v1Parts[i])
-		v2Int, _ := strconv.Atoi(v2Parts[i])
+	// Extract policy names and base versions
+	policyNames := make([]string, len(requests))
+	baseVersions := make([]string, len(requests))
+	for i, req := range requests {
+		policyNames[i] = req.Name
+		baseVersions[i] = fmt.Sprintf("%d", req.MajorVersion)
+	}
 
-		if v1Int > v2Int {
-			return 1
-		} else if v1Int < v2Int {
-			return -1
+	q := r.queries
+	rows, err := q.ResolvePoliciesMinor(ctx, sqlc.ResolvePoliciesMinorParams{
+		Column1: policyNames,
+		Column2: baseVersions,
+	})
+	if err != nil {
+		return nil, errs.NewDatabaseError("failed to resolve policies by latest minor", map[string]any{"error": err.Error()})
+	}
+
+	// Convert to ResolvePolicyVersion
+	resolveVersions := make([]ResolvePolicyVersion, 0, len(rows))
+	for _, row := range rows {
+		rpv, err := sqlcToResolvePolicyVersionFromMinor(row)
+		if err != nil {
+			return nil, err
 		}
+		resolveVersions = append(resolveVersions, rpv)
 	}
 
-	return 0
+	return resolveVersions, nil
+}
+
+func (r *SQLCRepository) BulkGetPolicyVersionsByLatestMajor(ctx context.Context, policyNames []string) ([]ResolvePolicyVersion, error) {
+	if len(policyNames) == 0 {
+		return []ResolvePolicyVersion{}, nil
+	}
+
+	q := r.queries
+	rows, err := q.ResolvePoliciesMajor(ctx, policyNames)
+	if err != nil {
+		return nil, errs.NewDatabaseError("failed to resolve policies by latest major", map[string]any{"error": err.Error()})
+	}
+
+	// Convert to ResolvePolicyVersion
+	resolveVersions := make([]ResolvePolicyVersion, 0, len(rows))
+	for _, row := range rows {
+		rpv, err := sqlcToResolvePolicyVersionFromMajor(row)
+		if err != nil {
+			return nil, err
+		}
+		resolveVersions = append(resolveVersions, rpv)
+	}
+
+	return resolveVersions, nil
 }
