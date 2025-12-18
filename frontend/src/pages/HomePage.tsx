@@ -3,375 +3,225 @@ import {
   Container,
   Typography,
   Button,
-  Card,
-  CardContent,
   Stack,
-  Paper,
   Grid,
+  useMediaQuery,
 } from '@mui/material';
-import {
-  Security,
-  Speed,
-  Description,
-  Build,
-  ArrowForward,
-} from '@mui/icons-material';
+import { ArrowForward } from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
 import { Link as RouterLink } from 'react-router-dom';
-import { useResponsive } from '@/hooks/ui/useResponsive';
-import { useAsyncData } from '@/hooks/data/useAsyncData';
-import { apiClient } from '@/lib/apiClient';
 import { ROUTES } from '@/lib/constants';
-import { PolicyCard } from '@/components/policies/PolicyCard';
-
-const features = [
-  {
-    icon: <Security />,
-    title: 'Discover Policies',
-    description: 'Explore a comprehensive collection of ready-made API management policies for security, traffic control, and more.',
-  },
-  {
-    icon: <Description />,
-    title: 'Detailed Documentation',
-    description: 'Access complete documentation with configuration examples, use cases, and implementation guides.',
-  },
-  {
-    icon: <Speed />,
-    title: 'Version Management',
-    description: 'Browse different versions of policies with clear release notes and compatibility information.',
-  },
-  {
-    icon: <Build />,
-    title: 'Custom Policies',
-    description: 'Learn how to create and publish your own custom policies with our comprehensive guide.',
-  },
-];
+import policyHubSvg from '../images/policyhub.svg';
+import Contribute from '../images/Contribute.svg';
+import { PolicyCatalogSection } from '@/components/common/PolicyCatalogSection';
 
 export function HomePage() {
-  const { theme } = useResponsive();
-
-  // Data fetching
-  const {
-    data: featuredPolicies,
-    loading: isLoadingFeatured,
-  } = useAsyncData(
-    () => apiClient.listPolicies({ pageSize: 3 }),
-    [],
-    { immediate: true, cacheKey: 'featured-policies' }
-  );
-
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   return (
     <Box>
-      {/* Hero Section */}
       <Box
         sx={{
-          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 50%, ${theme.palette.secondary.main} 100%)`,
-          color: 'white',
-          py: { xs: 8, md: 12 },
+          position: 'relative',
+          overflow: 'hidden',
+          py: { xs: 2, md: 4 },
+          color: 'common.white',
+          bgcolor: '#0B0F14',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            inset: 0,
+            background: `
+        radial-gradient(
+          700px 350px at 50% 20%,
+          rgba(255, 140, 0, 0.35),
+          transparent 60%
+        ),
+        radial-gradient(
+          600px 300px at 70% 50%,
+          rgba(255, 94, 0, 0.25),
+          transparent 55%
+        )
+      `,
+            pointerEvents: 'none',
+          },
         }}
       >
-        <Container maxWidth="lg">
-          <Grid container spacing={4} alignItems="center">
-            <Grid 
-              size={{ xs: 12, md: 6 }}
-              display="flex"
-              flexDirection="column"
-              justifyContent="center"
-            >
-              <Typography
-                variant="h2"
-                component="h1"
-                sx={{
-                  fontWeight: 700,
-                  mb: 3,
-                  fontSize: { xs: '2.5rem', md: '3.5rem' },
-                }}
-              >
-                WSO2 Policy Hub
-              </Typography>
-              
-              <Typography
-                variant="h6"
-                sx={{
-                  mb: 4,
-                  opacity: 0.9,
-                  lineHeight: 1.6,
-                  fontSize: { xs: '1.1rem', md: '1.25rem' },
-                }}
-              >
-                Discover, explore, and implement powerful API management policies
-                for your WSO2 API Platform. Enhance security, control traffic, 
-                and optimize your APIs with our curated policy collection.
-              </Typography>
-              
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                <Button
-                  component={RouterLink}
-                  to={ROUTES.POLICIES}
-                  variant="contained"
-                  size="large"
-                  endIcon={<ArrowForward />}
+        <Container maxWidth="lg" sx={{ position: 'relative' }}>
+          <Grid container spacing={{ xs: 4, md: 6 }} alignItems="center">
+            {/* LEFT: Text */}
+            <Grid size={{ xs: 12, md: 7 }}>
+              <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
+                <Typography
+                  variant= "h2"
+                  component="h1"
                   sx={{
-                    bgcolor: 'rgba(255, 255, 255, 0.2)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(255, 255, 255, 0.3)',
-                    '&:hover': {
-                      bgcolor: 'rgba(255, 255, 255, 0.3)',
-                    },
+                    fontWeight: 700,
+                    mb: 1,
+                    fontSize: { xs: '2rem', sm: '2.8rem', md: '3.4rem' },
+                    lineHeight: 1.15,
                   }}
                 >
-                  Explore Policies
-                </Button>
-                
-                <Button
-                  component={RouterLink}
-                  to={ROUTES.CUSTOM_POLICY_GUIDE}
-                  variant="outlined"
-                  size="large"
+                  <Box component="span" sx={{ color: '#ffffffff' }}>
+                    API Platform
+                  </Box>{' '}
+                  <Box component="span" sx={{ color: '#FF8C00' }}>
+                    Policy Hub
+                  </Box>
+                </Typography>
+
+                <Typography
+                  variant={isMobile ? "body2" : "h6"}
                   sx={{
-                    borderColor: 'rgba(255, 255, 255, 0.5)',
-                    color: 'white',
-                    '&:hover': {
-                      borderColor: 'white',
-                      bgcolor: 'rgba(255, 255, 255, 0.1)',
-                    },
+                    mb: 2,
+                    color: 'rgba(255,255,255,0.75)',
+                    maxWidth: { xs: '100%', md: 640 },
+                    mx: { xs: 'auto', md: 0 },
+                    lineHeight: 1.6,
                   }}
                 >
-                  Create Custom Policy
-                </Button>
-              </Stack>
+                  Discover, explore, and implement production-ready API
+                  management policies to secure, govern, and scale your WSO2 API
+                  Platform.
+                </Typography>
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  justifyContent={{ xs: 'center', md: 'flex-start' }}
+                >
+                  <Button
+                    component={RouterLink}
+                    to={ROUTES.CUSTOM_POLICY_GUIDE}
+                    size="large"
+                    variant="contained"
+                    endIcon={<ArrowForward />}
+                    sx={{
+                      borderRadius: 3,
+                      color: '#eeedecff',
+                      px: 3.5,
+                      fontWeight: 600,
+                    }}
+                  >
+                    Contribute to Custom Policies
+                  </Button>
+                </Stack>
+              </Box>
             </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }} offset={{ md: 0 }}>
+            <Grid size={{ xs: 12, md: 5 }}>
               <Box
                 sx={{
                   display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  height: { xs: 200, md: 300 },
+                  justifyContent: { xs: 'center', md: 'flex-end' },
                 }}
               >
-                {/* Placeholder for hero illustration */}
                 <Box
+                  component="img"
+                  src={policyHubSvg}
+                  alt="Policy Hub"
                   sx={{
-                    width: '100%',
-                    height: '100%',
-                    borderRadius: 2,
-                    bgcolor: 'rgba(255, 255, 255, 0.1)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    width: isMobile ? 220 : { sm: 280, md: 300 },
+                    maxWidth: '100%',
+                    height: 'auto',
                   }}
-                >
-                  <Typography
-                    variant="h4"
-                    sx={{ opacity: 0.6, textAlign: 'center' }}
-                  >
-                    Policy Hub
-                    <br />
-                    Illustration
-                  </Typography>
-                </Box>
+                />
               </Box>
             </Grid>
           </Grid>
         </Container>
       </Box>
 
-      {/* Features Section */}
-      <Container maxWidth="lg" sx={{ py: 8 }}>
-        <Typography
-          variant="h3"
-          component="h2"
-          sx={{
-            textAlign: 'center',
-            mb: 2,
-            fontWeight: 600,
-          }}
-        >
-          Everything You Need
-        </Typography>
-        
-        <Typography
-          variant="h6"
-          color="text.secondary"
-          sx={{
-            textAlign: 'center',
-            mb: 6,
-            maxWidth: 600,
-            mx: 'auto',
-          }}
-        >
-          Comprehensive policy management tools and resources to enhance your API platform
-        </Typography>
-
-        <Grid container spacing={4} columns={{ xs: 1, sm: 2, md: 4 }}>
-          {features.map((feature, index) => (
-            <Grid size={1} key={index}>
-              <Card
+      <Box sx={{ bgcolor: 'background.default' }}>
+        <PolicyCatalogSection showSearchBar />
+      </Box>
+      {/* Custom Policies Banner */}
+      <Box
+        sx={{
+          position: 'relative',
+          overflow: 'hidden',
+          py: { xs: 4, md: 6 },
+          bgcolor: '#0B0F14',
+          color: 'common.white',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            inset: 0,
+            background: `
+        radial-gradient(700px 320px at 20% 30%, rgba(255,140,0,0.22), transparent 60%),
+        radial-gradient(600px 300px at 80% 60%, rgba(255,94,0,0.14), transparent 65%)
+      `,
+            pointerEvents: 'none',
+          },
+        }}
+      >
+        <Container maxWidth="lg" sx={{ position: 'relative' }}>
+          {/* Left content */}
+          <Grid container spacing={4} alignItems="center">
+            {/* LEFT: Vector */}
+            <Grid size={{ xs: 12, md: 5 }}>
+              <Box
                 sx={{
-                  height: '100%',
-                  textAlign: 'center',
-                  transition: 'transform 0.2s ease-in-out',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                  },
+                  display: 'flex',
+                  justifyContent: { xs: 'center', md: 'flex-start' },
+                  alignItems: 'center',
                 }}
               >
-                <CardContent sx={{ p: 4 }}>
-                  <Box
-                    sx={{
-                      width: 64,
-                      height: 64,
-                      borderRadius: '50%',
-                      bgcolor: 'primary.main',
-                      color: 'primary.contrastText',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      mx: 'auto',
-                      mb: 3,
-                      '& svg': {
-                        fontSize: '2rem',
-                      },
-                    }}
-                  >
-                    {feature.icon}
-                  </Box>
-                  
-                  <Typography
-                    variant="h6"
-                    component="h3"
-                    sx={{ mb: 2, fontWeight: 600 }}
-                  >
-                    {feature.title}
-                  </Typography>
-                  
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ lineHeight: 1.6 }}
-                  >
-                    {feature.description}
-                  </Typography>
-                </CardContent>
-              </Card>
+                <Box
+                  component="img"
+                  src={Contribute}
+                  alt="Custom policies"
+                  sx={{
+                    width: { xs: '100%', md: 340 },
+                    maxWidth: '100%',
+                    height: 'auto',
+                    opacity: 0.95,
+                  }}
+                />
+              </Box>
             </Grid>
-          ))}
-        </Grid>
-      </Container>
 
-      {/* Featured Policies Section */}
-      {(isLoadingFeatured || (featuredPolicies?.success && featuredPolicies.data && featuredPolicies.data.length > 0)) && (
-        <Box sx={{ bgcolor: 'background.default', py: 8 }}>
-          <Container maxWidth="lg">
-            <Typography
-              variant="h3"
-              component="h2"
-              sx={{
-                textAlign: 'center',
-                mb: 2,
-                fontWeight: 600,
-              }}
-            >
-              Featured Policies
-            </Typography>
-            
-            <Typography
-              variant="h6"
-              color="text.secondary"
-              sx={{
-                textAlign: 'center',
-                mb: 6,
-              }}
-            >
-              Popular and recently updated policies
-            </Typography>
+            {/* RIGHT: Content */}
+            <Grid size={{ xs: 12, md: 7 }}>
+              <Typography
+                variant="h4"
+                component="h2"
+                sx={{ fontWeight: 800, mb: 1.5, lineHeight: 1.2 }}
+              >
+                Want to Contribute a Custom Policy?
+              </Typography>
 
-            <Grid container spacing={3} columns={{ xs: 1, md: 3 }}>
-              {isLoadingFeatured ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <Grid size={1} key={i}>
-                    <Card sx={{ height: '100%' }}>
-                      <CardContent>Loading...</CardContent>
-                    </Card>
-                  </Grid>
-                ))
-              ) : (
-                featuredPolicies?.data?.slice(0, 3)?.map((policy) => (
-                <Grid size={1} key={policy.name}>
-                  <PolicyCard policy={policy} viewMode="grid" />
-                </Grid>
-              )) || [])}
-            </Grid>
-            
-            <Box sx={{ textAlign: 'center', mt: 4 }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  color: 'rgba(255,255,255,0.75)',
+                  lineHeight: 1.7,
+                  maxWidth: 680,
+                  mb: 3,
+                }}
+              >
+                Follow our step-by-step guide to create, validate, and publish
+                your own policy for the WSO2 API Platform. Share reusable
+                governance and security controls with your teams.
+              </Typography>
+
               <Button
                 component={RouterLink}
-                to={ROUTES.POLICIES}
+                to={ROUTES.CUSTOM_POLICY_GUIDE}
                 variant="contained"
                 size="large"
                 endIcon={<ArrowForward />}
+                sx={{
+                  borderRadius: 3,
+                  px: 3.5,
+                  fontWeight: 700,
+                }}
               >
-                View All Policies
+                Go to Custom Policy Guide
               </Button>
-            </Box>
-          </Container>
-        </Box>
-      )}
-
-      {/* Call to Action Section */}
-      <Container maxWidth="lg" sx={{ py: 8 }}>
-        <Paper
-          sx={{
-            p: 6,
-            textAlign: 'center',
-            bgcolor: 'background.paper',
-          }}
-        >
-          <Typography
-            variant="h4"
-            component="h2"
-            sx={{ mb: 3, fontWeight: 600 }}
-          >
-            Ready to Get Started?
-          </Typography>
-          
-          <Typography
-            variant="h6"
-            color="text.secondary"
-            sx={{ mb: 4, maxWidth: 600, mx: 'auto' }}
-          >
-            Explore our policy catalog or learn how to create your own custom policies
-          </Typography>
-          
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={2}
-            sx={{ justifyContent: 'center' }}
-          >
-            <Button
-              component={RouterLink}
-              to={ROUTES.POLICIES}
-              variant="contained"
-              size="large"
-              endIcon={<ArrowForward />}
-            >
-              Browse Policies
-            </Button>
-            
-            <Button
-              component={RouterLink}
-              to={ROUTES.CUSTOM_POLICY_GUIDE}
-              variant="outlined"
-              size="large"
-            >
-              Custom Policy Guide
-            </Button>
-          </Stack>
-        </Paper>
-      </Container>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
     </Box>
   );
 }

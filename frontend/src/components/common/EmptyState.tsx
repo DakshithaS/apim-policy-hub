@@ -65,13 +65,10 @@ export function EmptyState({
         px: 3,
         minHeight: 300,
         bgcolor: 'transparent',
-        border: '2px dashed',
-        borderColor: 'divider',
-        borderRadius: 2,
       }}
     >
       {/* Icon */}
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 1 }}>
         {content.icon}
       </Box>
 
@@ -87,9 +84,9 @@ export function EmptyState({
 
       {/* Description */}
       <Typography
-        variant="body1"
+        variant="body2"
         color="text.secondary"
-        sx={{ mb: action ? 3 : 0, maxWidth: 500, lineHeight: 1.6 }}
+        sx={{ mb: action ? 2 : 0, maxWidth: 500, lineHeight: 1.6 }}
       >
         {content.description}
       </Typography>
@@ -99,7 +96,7 @@ export function EmptyState({
         <Button
           variant={action.variant || 'outlined'}
           onClick={action.onClick}
-          size="large"
+          size="small"
           sx={{
             minWidth: 120,
           }}

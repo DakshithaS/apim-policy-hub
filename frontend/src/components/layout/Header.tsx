@@ -27,7 +27,9 @@ export function Header() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const location = useLocation();
-  const [mobileMenuAnchor, setMobileMenuAnchor] = useState<null | HTMLElement>(null);
+  const [mobileMenuAnchor, setMobileMenuAnchor] = useState<null | HTMLElement>(
+    null
+  );
 
   const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setMobileMenuAnchor(event.currentTarget);
@@ -39,38 +41,44 @@ export function Header() {
 
   const isActivePath = (path: string) => {
     if (path === ROUTES.POLICIES) {
-      return location.pathname === path || location.pathname.startsWith('/policies');
+      return (
+        location.pathname === path || location.pathname.startsWith('/policies')
+      );
     }
     return location.pathname === path;
   };
 
   const renderDesktopNav = () => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-      {navigationItems.map((item) => (
-        <Button
-          key={item.path}
-          component={Link}
-          to={item.path}
-          sx={{
-            color: isActivePath(item.path) ? 'white' : 'rgba(255,255,255,0.9)',
-            fontWeight: isActivePath(item.path) ? 700 : 500,
-            textTransform: 'none',
-            px: 3,
-            py: 1.5,
-            borderRadius: 2,
-            background: isActivePath(item.path) ? 'rgba(255,255,255,0.2)' : 'transparent',
-            backdropFilter: isActivePath(item.path) ? 'blur(10px)' : 'none',
-            border: isActivePath(item.path) ? '1px solid rgba(255,255,255,0.3)' : '1px solid transparent',
-            '&:hover': {
-              background: 'rgba(255,255,255,0.15)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255,255,255,0.2)',
-            },
-          }}
-        >
-          {item.label}
-        </Button>
-      ))}
+      {navigationItems.map(item => {
+        const active = isActivePath(item.path);
+        return (
+          <Button
+            key={item.path}
+            component={Link}
+            to={item.path}
+            sx={{
+              color: active ? '#FFFFFF' : 'rgba(255,255,255,0.8)',
+              fontWeight: active ? 700 : 500,
+              textTransform: 'none',
+              px: 2.5,
+              py: 1,
+              borderRadius: 2,
+              backgroundColor: active ? 'rgba(255,140,0,0.14)' : 'transparent',
+              border: active
+                ? '1px solid rgba(255,140,0,0.35)'
+                : '1px solid transparent',
+              '&:hover': {
+                backgroundColor: 'rgba(255,140,0,0.12)',
+                borderColor: 'rgba(255,140,0,0.3)',
+              },
+            }}
+          >
+            {item.label}
+          </Button>
+        );
+      })}
+
       <Box sx={{ ml: 1 }}>
         <ThemeToggle />
       </Box>
@@ -80,54 +88,81 @@ export function Header() {
   const renderMobileNav = () => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
       <ThemeToggle />
-      <IconButton
-        size="large"
-        edge="end"
-        color="inherit"
-        aria-label="menu"
-        onClick={handleMobileMenuOpen}
-      >
+      <IconButton onClick={handleMobileMenuOpen} sx={{ color: '#FFFFFF' }}>
         <MenuIcon />
       </IconButton>
+
       <Menu
         anchorEl={mobileMenuAnchor}
         open={Boolean(mobileMenuAnchor)}
         onClose={handleMobileMenuClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
+        PaperProps={{
+          sx: {
+            mt: 1,
+            bgcolor: '#0B0F14',
+            color: '#FFFFFF',
+            border: '1px solid rgba(255,140,0,0.25)',
+            borderRadius: 2,
+          },
         }}
       >
-        {navigationItems.map((item) => (
-          <MenuItem
-            key={item.path}
-            component={Link}
-            to={item.path}
-            onClick={handleMobileMenuClose}
-            selected={isActivePath(item.path)}
-          >
-            {item.label}
-          </MenuItem>
-        ))}
+        {navigationItems.map(item => {
+          const active = isActivePath(item.path);
+          return (
+            <MenuItem
+              key={item.path}
+              component={Link}
+              to={item.path}
+              onClick={handleMobileMenuClose}
+              selected={active}
+              sx={{
+                '&.Mui-selected': {
+                  bgcolor: 'rgba(255,140,0,0.18)',
+                },
+                '&:hover': {
+                  bgcolor: 'rgba(255,140,0,0.12)',
+                },
+              }}
+            >
+              {item.label}
+            </MenuItem>
+          );
+        })}
       </Menu>
     </Box>
   );
 
   return (
-    <AppBar 
-      position="static" 
+    <AppBar
+      position="sticky"
       elevation={0}
       sx={{
-        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
-        boxShadow: `0 4px 20px ${theme.palette.primary.main}25`,
+        bgcolor: '#0B0F14',
+        boxShadow: 'none',
+        overflow: 'hidden',
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          inset: 0,
+          background: `
+        radial-gradient(
+          900px 450px at 50% 30%,
+          rgba(255, 140, 0, 0.18),
+          transparent 70%
+        ),
+        radial-gradient(
+          800px 400px at 70% 60%,
+          rgba(255, 94, 0, 0.12),
+          transparent 75%
+        )
+      `,
+          pointerEvents: 'none',
+        },
       }}
     >
-      <Container maxWidth="xl">
+      <Container maxWidth="xl" sx={{ position: 'relative' }}>
         <Toolbar sx={{ justifyContent: 'space-between', py: 1 }}>
+          {/* Logo */}
           <Box
             component={Link}
             to={ROUTES.HOME}
@@ -140,31 +175,28 @@ export function Header() {
           >
             <Box
               sx={{
-                width: 42,
-                height: 42,
+                width: 40,
+                height: 40,
                 mr: 2,
-                background: 'rgba(255,255,255,0.2)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255,255,255,0.3)',
                 borderRadius: 2,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'white',
                 fontWeight: 800,
-                fontSize: '1.2rem',
-                boxShadow: '0 8px 32px rgba(255,255,255,0.1)',
+                fontSize: '1.1rem',
+                color: '#FFFFFF',
+                border: '1px solid rgba(255,140,0,0.45)',
               }}
             >
               W
             </Box>
+
             <Typography
               variant="h6"
-              component="h1"
               sx={{
                 fontWeight: 700,
-                color: 'white',
-                fontSize: '1.25rem',
+                color: '#FFFFFF',
+                fontSize: '1.15rem',
               }}
             >
               Policy Hub

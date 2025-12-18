@@ -1,9 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import {
-  TextField,
-  InputAdornment,
-  IconButton,
-} from '@mui/material';
+import { Box, TextField, InputAdornment, IconButton } from '@mui/material';
 import { Search, Clear } from '@mui/icons-material';
 import { useDebouncedValue } from '@/hooks/ui/useDebouncedValue';
 
@@ -22,17 +18,14 @@ export function SearchInput({
   placeholder = 'Search policies...',
   debounceMs = 300,
   fullWidth = true,
-  size = 'medium',
 }: SearchInputProps) {
   const [internalValue, setInternalValue] = useState(value);
   const debouncedValue = useDebouncedValue(internalValue, debounceMs);
 
-  // Update internal value when external value changes
   useEffect(() => {
     setInternalValue(value);
   }, [value]);
 
-  // Call onChange when debounced value changes
   useEffect(() => {
     if (debouncedValue.value !== value) {
       onChange(debouncedValue.value);
@@ -45,30 +38,66 @@ export function SearchInput({
   }, [onChange]);
 
   return (
-    <TextField
-      value={internalValue}
-      onChange={(e) => setInternalValue(e.target.value)}
-      placeholder={placeholder}
-      fullWidth={fullWidth}
-      size={size}
-      InputProps={{
-        startAdornment: (
-          <InputAdornment position="start">
-            <Search color="action" />
-          </InputAdornment>
-        ),
-        endAdornment: internalValue && (
-          <InputAdornment position="end">
-            <IconButton
-              size="small"
-              onClick={handleClear}
-              aria-label="Clear search"
-            >
-              <Clear fontSize="small" />
-            </IconButton>
-          </InputAdornment>
-        ),
-      }}
-    />
+    <Box>
+      <TextField
+        value={internalValue}
+        onChange={e => setInternalValue(e.target.value)}
+        placeholder={placeholder}
+        fullWidth={fullWidth}
+        variant="outlined"
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <Search sx={{ fontSize: 20, color: 'text.secondary' }} />
+            </InputAdornment>
+          ),
+          endAdornment: internalValue && (
+            <InputAdornment position="end">
+              <IconButton
+                size="small"
+                onClick={handleClear}
+                aria-label="Clear search"
+                sx={{
+                  color: 'text.secondary',
+                  '&:hover': { color: 'text.primary' },
+                }}
+              >
+                <Clear fontSize="small" />
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            height: 42, 
+            borderRadius: 1,
+            backgroundColor: 'background.paper',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+            transition: 'all 0.2s ease',
+
+            '& fieldset': {
+              borderColor: 'divider',
+            },
+
+            '&:hover fieldset': {
+              borderColor: 'text.secondary',
+            },
+
+            '&.Mui-focused': {
+              boxShadow: theme => `0 0 0 2px ${theme.palette.primary.main}22`,
+              '& fieldset': {
+                borderColor: 'primary.main',
+                borderWidth: 1,
+              },
+            },
+          },
+
+          '& input': {
+            fontSize: 14,
+            padding: '10px 0',
+          },
+        }}
+      />
+    </Box>
   );
 }

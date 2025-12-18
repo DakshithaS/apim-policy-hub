@@ -1,9 +1,6 @@
 import {
   Box,
   Typography,
-  FormControl,
-  FormGroup,
-  FormControlLabel,
   Checkbox,
   Button,
   Chip,
@@ -13,11 +10,7 @@ import {
   AccordionDetails,
   useMediaQuery,
 } from '@mui/material';
-import { 
-  ExpandMore, 
-  KeyboardArrowDown,
-  KeyboardArrowUp 
-} from '@mui/icons-material';
+import { ExpandMore } from '@mui/icons-material';
 import { FilterState } from '@/lib/types';
 import { useTheme } from '@mui/material/styles';
 import { capitalize } from '@/lib/utils';
@@ -43,33 +36,39 @@ function FilterPanel({
 }: FilterPanelProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  
+
   // State for collapsible sections
   const [isShowAllCategories, setIsShowAllCategories] = useState(false);
   const [isShowAllProviders, setIsShowAllProviders] = useState(false);
   const [isShowAllPlatforms, setIsShowAllPlatforms] = useState(false);
 
-  const activeFiltersCount = 
-    filters.categories.length + 
-    filters.providers.length + 
+  const activeFiltersCount =
+    filters.categories.length +
+    filters.providers.length +
     filters.platforms.length;
 
-  const handleCheckboxChange = useCallback((
-    filterType: 'categories' | 'providers' | 'platforms',
-    value: string,
-    checked: boolean
-  ) => {
-    const currentValues = filters[filterType];
-    const newValues = checked
-      ? [...currentValues, value]
-      : currentValues.filter(item => item !== value);
-    
-    onChange({ [filterType]: newValues });
-  }, [filters, onChange]);
+  const handleCheckboxChange = useCallback(
+    (
+      filterType: 'categories' | 'providers' | 'platforms',
+      value: string,
+      checked: boolean
+    ) => {
+      const currentValues = filters[filterType];
+      const newValues = checked
+        ? [...currentValues, value]
+        : currentValues.filter(item => item !== value);
 
-  const handleClearFilterType = useCallback((filterType: 'categories' | 'providers' | 'platforms') => {
-    onChange({ [filterType]: [] });
-  }, [onChange]);
+      onChange({ [filterType]: newValues });
+    },
+    [filters, onChange]
+  );
+
+  const handleClearFilterType = useCallback(
+    (filterType: 'categories' | 'providers' | 'platforms') => {
+      onChange({ [filterType]: [] });
+    },
+    [onChange]
+  );
 
   const renderCheckboxGroup = (
     title: string,
@@ -83,85 +82,55 @@ function FilterPanel({
     const visibleItems = showAll ? items : items.slice(0, maxVisible);
     const hasMore = items.length > maxVisible;
     const hasSelected = selectedItems.length > 0;
-
     return (
-      <Box 
-        sx={{ 
-          mb: 20,
-          p: 3,
-          pb: 2,
-          bgcolor: 'background.paper',
-          borderRadius: 3,
-          border: '1px solid',
-          borderColor: 'divider',
-          boxShadow: theme.shadows[2],
-          backdropFilter: 'blur(20px)',
-          position: 'relative',
-          overflow: 'hidden',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '2px',
-            background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
-          },
-          '&:hover': {
-            boxShadow: `0 8px 30px ${theme.palette.primary.main}25`,
-          }
-        }}
-      >
-        <Box 
-          sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
+      <Box sx={{ width: '100%' }}>
+        <Box
+          sx={{
+            display: 'flex',
             alignItems: 'center',
-            mb: 1.5 
+            justifyContent: 'space-between',
+            mb: 1,
           }}
         >
-          <Typography 
-            variant="subtitle1" 
-            sx={{ 
-              fontWeight: 600,
-              color: 'text.primary',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1
-            }}
-          >
-            {title}
-            <Chip
-              label={`${items.length} available`}
-              size="small"
-              variant="outlined"
-              sx={{ 
-                height: 20, 
-                fontSize: '0.65rem',
-                color: 'text.secondary',
-                borderColor: 'divider'
-              }}
-            />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography
+              sx={{ fontWeight: 700, fontSize: 14, color: '#f77005' }}
+            >
+              {title}
+            </Typography>
+
             {hasSelected && (
               <Chip
                 label={`${selectedItems.length} selected`}
                 size="small"
-                color="primary"
-                sx={{ height: 20, fontSize: '0.7rem' }}
+                sx={{
+                  height: 18,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  bgcolor: '#f8ceacff',
+                  color: 'text.primary',
+                  borderRadius: 1,
+                }}
               />
             )}
-          </Typography>
-          
+          </Box>
+
           {hasSelected && (
             <Button
+              variant="text"
               size="small"
               onClick={() => handleClearFilterType(filterType)}
               disabled={isLoading}
-              sx={{ 
+              sx={{
                 minWidth: 'auto',
-                p: 0.5,
-                fontSize: '0.75rem',
-                textDecoration: 'underline'
+                p: 0,
+                fontSize: 12,
+                textTransform: 'none',
+                color: 'text.secondary',
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                  textDecoration: 'underline',
+                },
               }}
             >
               Clear
@@ -169,171 +138,159 @@ function FilterPanel({
           )}
         </Box>
 
-        <FormControl component="fieldset" disabled={isLoading}>
-          <FormGroup>
-            {visibleItems.map((item) => (
-              <FormControlLabel
+        {/* Items list (like your image) */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+          {visibleItems.map(item => {
+            const checked = selectedItems.includes(item);
+
+            return (
+              <Box
                 key={item}
-                control={
-                  <Checkbox
-                    checked={selectedItems.includes(item)}
-                    onChange={(e) => 
-                      handleCheckboxChange(filterType, item, e.target.checked)
-                    }
-                    size="small"
-                    sx={{
-                      transition: 'all 0.15s ease-in-out',
-                      '&.Mui-checked': {
-                        color: 'primary.main',
-                      },
-                    }}
-                  />
-                }
-                label={
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      fontSize: '0.875rem',
-                      color: selectedItems.includes(item) 
-                        ? 'text.primary' 
-                        : 'text.secondary',
-                      transition: 'color 0.15s ease-in-out'
-                    }}
-                  >
-                    {capitalize(item)}
-                  </Typography>
-                }
-                sx={{ 
-                  ml: 0,
-                  mr: 0,
-                  '& .MuiFormControlLabel-label': {
-                    fontSize: '0.875rem'
-                  }
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  py: 0.25,
                 }}
-              />
-            ))}
-            
-            {/* Show more button - consistently aligned */}
-            {hasMore && (
-              <Box sx={{ display: 'flex', justifyContent: 'flex-start', mt: 0, mr: 1, ml: 3 }}>
-                <Button
-                  size="small"
-                  onClick={() => setShowAll(!showAll)}
-                  endIcon={showAll ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
-                  variant="text"
-                  sx={{ 
-                    fontSize: '0.75rem',
-                    textTransform: 'none',
-                    color: 'primary.main',
-                    fontWeight: 500,
-                    minHeight: 28,
-                    px: 1,
-                    transition: 'all 0.2s ease-in-out',
-                    '&:hover': {
-                      backgroundColor: 'primary.50'
-                    },
-                    '& .MuiButton-endIcon': {
-                      ml: 0.5,
-                      fontSize: '0.9rem'
-                    }
+              >
+                <Typography
+                  sx={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: 'text.secondary',
                   }}
                 >
-                  {showAll 
-                    ? `Show fewer` 
-                    : `Show ${items.length - maxVisible} more`
+                  {capitalize(item)}
+                </Typography>
+
+                <Checkbox
+                  size="small"
+                  checked={checked}
+                  disabled={isLoading}
+                  onChange={e =>
+                    handleCheckboxChange(filterType, item, e.target.checked)
                   }
-                </Button>
+                  sx={{
+                    p: 0.25,
+                    '&.Mui-checked': {
+                      color: theme.palette.warning.main,
+                    },
+                  }}
+                />
               </Box>
-            )}
-          </FormGroup>
-        </FormControl>
+            );
+          })}
+        </Box>
+
+        {/* Show more (optional) */}
+        {hasMore && (
+          <Button
+            size="small"
+            variant="text"
+            onClick={() => setShowAll(!showAll)}
+            disabled={isLoading}
+            sx={{
+              mt: 0.5,
+              minWidth: 'auto',
+              p: 0,
+              fontSize: 12,
+              textTransform: 'none',
+              color: 'text.secondary',
+              '&:hover': {
+                backgroundColor: 'transparent',
+                textDecoration: 'underline',
+              },
+            }}
+          >
+            {showAll ? 'Show fewer' : `Show ${items.length - maxVisible} more`}
+          </Button>
+        )}
       </Box>
     );
   };
 
-
-
   const filterContent = (
     <Box sx={{ width: '100%' }}>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: { xs: 2, sm: 3 },
-          pb: { xs: 1, sm: 1.5 },
-          borderBottom: '1px solid',
-          borderColor: 'divider'
-        }}
-      >
-        <Typography 
-          variant="h6" 
-          sx={{ 
-            fontWeight: 600,
-            fontSize: { xs: '1.1rem', sm: '1.25rem' },
-            color: 'text.primary'
+      {!isMobile && (
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: { xs: 2, sm: 3 },
+            pb: { xs: 1, sm: 1.5 },
+            borderBottom: '1px solid',
+            borderColor: 'divider',
           }}
         >
-          Filters
-        </Typography>
-      </Box>
-
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 600,
+              color: 'text.primary',
+            }}
+          >
+            Filters
+          </Typography>
+        </Box>
+      )}
       <Stack spacing={{ xs: 2.5, sm: 3 }}>
-        {availableCategories.length > 0 && renderCheckboxGroup(
-          'Categories',
-          availableCategories,
-          filters.categories,
-          'categories',
-          UI_LIMITS.MAX_CATEGORIES_VISIBLE,
-          isShowAllCategories,
-          setIsShowAllCategories
-        )}
-
-        {availableProviders.length > 0 && renderCheckboxGroup(
-          'Providers', 
-          availableProviders,
-          filters.providers,
-          'providers',
-          UI_LIMITS.MAX_PROVIDERS_VISIBLE,
-          isShowAllProviders,
-          setIsShowAllProviders
-        )}
-
-        {availablePlatforms.length > 0 && renderCheckboxGroup(
-          'Platforms',
-          availablePlatforms,
-          filters.platforms,
-          'platforms',
-          UI_LIMITS.MAX_PLATFORMS_VISIBLE,
-          isShowAllPlatforms,
-          setIsShowAllPlatforms
-        )}        {/* Show platforms section even if no data available */}
+        {availableCategories.length > 0 &&
+          renderCheckboxGroup(
+            'Categories',
+            availableCategories,
+            filters.categories,
+            'categories',
+            UI_LIMITS.MAX_CATEGORIES_VISIBLE,
+            isShowAllCategories,
+            setIsShowAllCategories
+          )}
+        {availableProviders.length > 0 &&
+          renderCheckboxGroup(
+            'Providers',
+            availableProviders,
+            filters.providers,
+            'providers',
+            UI_LIMITS.MAX_PROVIDERS_VISIBLE,
+            isShowAllProviders,
+            setIsShowAllProviders
+          )}
+        {availablePlatforms.length > 0 &&
+          renderCheckboxGroup(
+            'Platforms',
+            availablePlatforms,
+            filters.platforms,
+            'platforms',
+            UI_LIMITS.MAX_PLATFORMS_VISIBLE,
+            isShowAllPlatforms,
+            setIsShowAllPlatforms
+          )}{' '}
         {availablePlatforms.length === 0 && (
-          <Box 
-            sx={{ 
+          <Box
+            sx={{
               p: 2,
               backgroundColor: 'background.default',
               borderRadius: 2,
               border: '1px solid',
               borderColor: 'divider',
-              textAlign: 'center'
+              textAlign: 'center',
             }}
           >
-            <Typography 
-              variant="subtitle1" 
-              sx={{ 
+            <Typography
+              variant="subtitle1"
+              sx={{
                 fontWeight: 600,
                 color: 'text.secondary',
-                mb: 1
+                mb: 1,
               }}
             >
               Platforms
             </Typography>
-            <Typography 
-              variant="body2" 
-              sx={{ 
+            <Typography
+              variant="body2"
+              sx={{
                 color: 'text.secondary',
-                fontStyle: 'italic'
+                fontStyle: 'italic',
               }}
             >
               Platform filter coming soon
@@ -346,9 +303,9 @@ function FilterPanel({
 
   if (isMobile) {
     return (
-      <Accordion 
-        sx={{ 
-          mb: { xs: 2, sm: 3 },
+      <Accordion
+        sx={{
+          mb: { xs: 1, sm: 2 },
           borderRadius: 2,
           boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
           border: '1px solid',
@@ -359,31 +316,27 @@ function FilterPanel({
           '&.Mui-expanded': {
             margin: 0,
             mb: { xs: 2, sm: 3 },
-          }
+          },
         }}
       >
-        <AccordionSummary 
+        <AccordionSummary
           expandIcon={<ExpandMore />}
           sx={{
-            px: { xs: 2, sm: 3 },
-            py: { xs: 1.5, sm: 2 },
             '& .MuiAccordionSummary-content': {
-              alignItems: 'center'
+              alignItems: 'center',
             },
             '& .MuiAccordionSummary-expandIconWrapper': {
-              color: 'primary.main'
-            }
+              color: 'primary.main',
+            },
           }}
         >
-          <Typography 
+          <Typography
             variant="h6"
             sx={{
-              fontWeight: 600,
-              fontSize: { xs: '1.1rem', sm: '1.25rem' },
               display: 'flex',
               alignItems: 'center',
               gap: 1,
-              color: 'text.primary'
+              color: 'text.primary',
             }}
           >
             Filters
@@ -392,10 +345,10 @@ function FilterPanel({
                 label={activeFiltersCount}
                 size="small"
                 color="primary"
-                sx={{ 
+                sx={{
                   height: 20,
                   fontSize: '0.7rem',
-                  fontWeight: 600
+                  fontWeight: 600,
                 }}
               />
             )}
@@ -412,16 +365,8 @@ function FilterPanel({
     <Box
       sx={{
         height: 'fit-content',
-        bgcolor: 'background.paper',
-        border: '1px solid',
         borderColor: 'divider',
-        borderRadius: 2,
         p: { xs: 2, sm: 3 },
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
-        transition: 'box-shadow 0.2s ease-in-out',
-        '&:hover': {
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
-        }
       }}
     >
       {filterContent}
