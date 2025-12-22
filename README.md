@@ -67,90 +67,107 @@ git clone <repository-url>
 cd apim-policy-hub
 ```
 
-### 2. Backend Setup
 
-#### Using Docker (Recommended)
-```bash
-make backend-setup  # Setup PostgreSQL, install deps, generate SQLC
-make backend-run    # Start the backend server
+## 🚀 Setup Options
+
+Choose **one** of the following setup methods. Each provides a complete working environment.
+
+```mermaid
+flowchart TD
+    A[Start Setup] --> B{Choose Setup Method}
+    
+    B --> C[Option 1: Full Automated]
+    B --> D[Option 2: Root Directory]
+    B --> E[Option 3: Manual Navigation]
+    
+    C --> F[make full-setup<br/>or<br/>make setup]
+    F --> G[make start]
+    G --> H[Backend + Frontend Ready]
+    
+    D --> I[Docker PostgreSQL]
+    D --> J[Existing PostgreSQL]
+    
+    I --> K[make backend-setup]
+    K --> L[make backend-populate-data<br/>optional]
+    L --> M[make backend-run]
+    
+    J --> N[Edit backend/.env]
+    N --> O[make backend-populate-data<br/>optional]
+    O --> P[make backend-run]
+    
+    M --> Q[make frontend-setup]
+    P --> Q
+    Q --> R[make frontend-dev]
+    R --> H
+    
+    E --> S[cd backend]
+    S --> T[Docker PostgreSQL]
+    S --> U[Existing PostgreSQL]
+    
+    T --> V[make docker-up]
+    V --> W[make populate-sample-data<br/>optional]
+    W --> X[make run]
+    
+    U --> Y[Edit .env]
+    Y --> Z[make populate-sample-data<br/>optional]
+    Z --> AA[make run]
+    
+    X --> BB[cd ../frontend]
+    AA --> BB
+    BB --> CC[npm install]
+    CC --> DD[npm run dev]
+    DD --> H
+    
+    H --> EE[Access Application<br/>Backend: localhost:8080<br/>Frontend: localhost:3000]
 ```
 
-#### Manual Setup
+### Option 1: Full Automated Setup
 ```bash
-cd backend
-# Install dependencies
-go mod download
+# With sample data (recommended for first-time users)
+make full-setup  # Complete setup with Docker, dependencies, SQLC, sample data, and frontend install
+make start       # Start both backend and frontend servers
 
-# Set up PostgreSQL database
-createdb policyhub
-
-# Configure environment (copy and edit .env)
-cp .env.example .env
-
-# Generate SQLC code
-make sqlc-generate
-
-# Start server
-make run
-```
-
-Backend will be available at `http://localhost:8080`
-
-### 3. Frontend Setup
-```bash
-make frontend-setup  # Install dependencies
-make frontend-dev    # Start development server
-```
-
-Frontend will be available at `http://localhost:3000`
-
-### 4. Access the Application
-Open `http://localhost:3000` in your browser to access the full application.
-
-## 🚀 Quick Setup with Sample Data
-
-Choose the setup that fits your needs:
-
-### Full Setup with Sample Data (Recommended for first-time users)
-```bash
-make full-setup  # Complete setup: Docker, deps, SQLC, sample data, frontend install
+# Without sample data
+make setup       # Complete setup with Docker, dependencies, SQLC, and frontend install (no sample data)
 make start       # Start both backend and frontend servers
 ```
-*Use this for a fully functional environment with demo data.*
+*Use `make full-setup` for a fully functional environment with demo data, or `make setup` for an empty database. Backend at `http://localhost:8080`, Frontend at `http://localhost:3000`.*
 
-### Basic Setup (Without sample data)
+### Option 2: Backend + Frontend from Root Directory (Recommended)
 ```bash
-make setup       # Setup backend and frontend without sample data
-make start       # Start both servers
-```
-*Use this if you want to start with an empty database.*
+# Backend setup (Docker PostgreSQL)
+make backend-setup          # Setup PostgreSQL, install deps, generate SQLC
+make backend-populate-data  # Populate database with sample policies (optional)
+make backend-run            # Start backend server
 
-### Clean Database
-```bash
-make docker-clean  # Stop containers and remove volumes (reset DB to clean state)
-```
-*Use this to reset the database and start fresh.*
-If you prefer manual control:
+# Alternative: Backend setup (existing PostgreSQL)
+make backend-run            # Start backend server
 
-### 1. Backend with Sample Data
-```bash
-make backend-setup          # Setup PostgreSQL, deps, SQLC
-make backend-populate-data  # Populate database with sample policies
-make backend-run            # Start the backend server
-```
-
-### 2. Frontend
-```bash
+# Frontend setup (in another terminal)
 make frontend-setup  # Install dependencies
 make frontend-dev    # Start development server
 ```
+*Use this for separate control of backend and frontend from the project root. Choose Docker or existing PostgreSQL. Recommended for development.*
 
-### 3. Access with Sample Data
-- Backend API: `http://localhost:8080`
-- Frontend App: `http://localhost:3000`
-- Sample data includes 5 policies with 6 versions and documentation
+### Option 3: Manual Directory Navigation
+```bash
+# Backend setup
+cd backend
 
-This setup provides a fully functional environment with demo data for testing and development.
+# For Docker PostgreSQL (default)
+make docker-up
+make populate-sample-data  # Optional: populate with sample data
+make run
+
+# For existing PostgreSQL (skip docker-up, ensure DB exists)
+make run
+
+# Frontend setup (in another terminal)
+cd ../frontend
+npm install
+npm run dev
+```
+*Use this for manual control with directory changes. Choose Docker PostgreSQL or existing PostgreSQL based on your setup. Run backend and frontend in separate terminals.*
 
 ## 📁 Project Structure
 
@@ -260,4 +277,3 @@ For support and questions:
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
-Built with ❤️ for the WSO2 API Platform community.
