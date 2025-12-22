@@ -67,6 +67,22 @@ git clone <repository-url>
 cd apim-policy-hub
 ```
 
+### 2. Configure Environment
+Before starting the setup, configure your environment variables:
+
+**For Backend:**
+Copy and edit the environment file:
+```bash
+cp backend/.env.example backend/.env
+```
+Edit `backend/.env` with your database connection details and other settings.
+
+**For Frontend:**
+Create frontend environment file:
+```bash
+# Create frontend/.env.local
+echo "VITE_API_BASE_URL=http://localhost:8080" > frontend/.env.local
+```
 
 ## 🚀 Setup Options
 
@@ -74,51 +90,49 @@ Choose **one** of the following setup methods. Each provides a complete working 
 
 ```mermaid
 flowchart TD
-    A[Start Setup] --> B{Choose Setup Method}
+    A[Clone Repository] --> B[Configure Environment<br/>cp backend/.env.example backend/.env<br/>Edit backend/.env<br/>Create frontend/.env.local]
+    B --> C{Choose Setup Method}
     
-    B --> C[Option 1: Full Automated]
-    B --> D[Option 2: Root Directory]
-    B --> E[Option 3: Manual Navigation]
+    C --> D[Option 1: Full Automated]
+    C --> E[Option 2: Root Directory]
+    C --> F[Option 3: Manual Navigation]
     
-    C --> F[make full-setup<br/>or<br/>make setup]
-    F --> G[make start]
-    G --> H[Backend + Frontend Ready]
+    D --> G{With Sample Data?}
+    G -->|Yes| H[make full-setup]
+    G -->|No| I[make setup]
+    H --> J[make start]
+    I --> J
+    J --> K[Backend + Frontend Ready]
     
-    D --> I[Docker PostgreSQL]
-    D --> J[Existing PostgreSQL]
-    
-    I --> K[make backend-setup]
-    K --> L[make backend-populate-data<br/>optional]
-    L --> M[make backend-run]
-    
-    J --> N[Edit backend/.env]
-    N --> O[make backend-populate-data<br/>optional]
-    O --> P[make backend-run]
-    
-    M --> Q[make frontend-setup]
+    E --> L{Setup Docker PostgreSQL?}
+    L -->|Yes| M[make backend-setup]
+    L -->|No| N[make backend-run]
+    M --> O{Populate Sample Data?}
+    O -->|Yes| P[make backend-populate-data]
+    O -->|No| Q[make backend-run]
     P --> Q
-    Q --> R[make frontend-dev]
-    R --> H
     
-    E --> S[cd backend]
-    S --> T[Docker PostgreSQL]
-    S --> U[Existing PostgreSQL]
+    N --> R[make frontend-setup]
+    Q --> R
+    R --> S[make frontend-dev]
+    S --> K
     
-    T --> V[make docker-up]
-    V --> W[make populate-sample-data<br/>optional]
-    W --> X[make run]
+    F --> T[cd backend]
+    T --> U{Setup Docker PostgreSQL?}
+    U -->|Yes| V[make docker-up]
+    U -->|No| W[make run]
+    V --> X{Populate Sample Data?}
+    X -->|Yes| Y[make populate-sample-data]
+    X -->|No| Z[make run]
+    Y --> Z
     
-    U --> Y[Edit .env]
-    Y --> Z[make populate-sample-data<br/>optional]
-    Z --> AA[make run]
+    W --> AA[cd ../frontend]
+    Z --> AA
+    AA --> BB[npm install]
+    BB --> CC[npm run dev]
+    CC --> K
     
-    X --> BB[cd ../frontend]
-    AA --> BB
-    BB --> CC[npm install]
-    CC --> DD[npm run dev]
-    DD --> H
-    
-    H --> EE[Access Application<br/>Backend: localhost:8080<br/>Frontend: localhost:3000]
+    K --> DD[Access Application<br/>Backend: localhost:8080<br/>Frontend: localhost:3000]
 ```
 
 ### Option 1: Full Automated Setup
@@ -135,39 +149,40 @@ make start       # Start both backend and frontend servers
 
 ### Option 2: Backend + Frontend from Root Directory (Recommended)
 ```bash
-# Backend setup (Docker PostgreSQL)
-make backend-setup          # Setup PostgreSQL, install deps, generate SQLC
-make backend-populate-data  # Populate database with sample policies (optional)
-make backend-run            # Start backend server
+# Choose your database setup:
+# For Docker PostgreSQL: make backend-setup
+# For existing PostgreSQL: skip to make backend-run
 
-# Alternative: Backend setup (existing PostgreSQL)
-make backend-run            # Start backend server
+# Optional: Populate with sample data
+make backend-populate-data
 
-# Frontend setup (in another terminal)
-make frontend-setup  # Install dependencies
-make frontend-dev    # Start development server
+# Start services
+make backend-run            # Backend server
+make frontend-setup          # Install frontend dependencies
+make frontend-dev            # Frontend development server
 ```
-*Use this for separate control of backend and frontend from the project root. Choose Docker or existing PostgreSQL. Recommended for development.*
+*Recommended for development. Use Docker PostgreSQL for quick setup or existing PostgreSQL if you have your own database.*
 
 ### Option 3: Manual Directory Navigation
 ```bash
-# Backend setup
 cd backend
 
-# For Docker PostgreSQL (default)
-make docker-up
-make populate-sample-data  # Optional: populate with sample data
+# Choose your database setup:
+# For Docker PostgreSQL: make docker-up
+# For existing PostgreSQL: skip to make run
+
+# Optional: Populate with sample data
+make populate-sample-data
+
+# Start backend
 make run
 
-# For existing PostgreSQL (skip docker-up, ensure DB exists)
-make run
-
-# Frontend setup (in another terminal)
+# Start frontend (in another terminal)
 cd ../frontend
 npm install
 npm run dev
 ```
-*Use this for manual control with directory changes. Choose Docker PostgreSQL or existing PostgreSQL based on your setup. Run backend and frontend in separate terminals.*
+*Use for manual control with directory changes. Choose Docker or existing PostgreSQL based on your setup.*
 
 ## 📁 Project Structure
 
@@ -256,6 +271,12 @@ DB_NAME=policyhub
 DB_USER=your_username
 DB_PASSWORD=your_password
 LOG_LEVEL=info
+
+# Azure Storage Configuration
+AZURE_STORAGE_ACCOUNT_NAME=your_storage_account
+AZURE_STORAGE_ACCOUNT_KEY=yourstoragekey==
+AZURE_STORAGE_CONTAINER_NAME=policies
+POLICY_BASE_PATH=policies
 ```
 
 ### Frontend Environment Variables
